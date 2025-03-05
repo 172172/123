@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facit Program för Driftstoppsanalys</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" defer></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; margin: 20px 0; width: 80%; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; word-wrap: break-word; max-width: 300px; }
+        th { background-color: #f2f2f2; }
+        h2 { margin-top: 30px; }
+        ul { margin-left: 20px; }
+        .highlight { color: red; font-weight: bold; }
+        .solution { background-color: #e6ffe6; padding: 10px; margin: 10px 0; }
+        
+        /* iPad/Touch Controls */
+        .ipad-controls {
+            margin: 15px 0;
+            display: none; /* Hidden by default, shown only on touch devices */
+            gap: 10px;
+        }
+        
+        .touch-button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            touch-action: manipulation; /* Improves touch response */
+        }
+    </style>
+</head>
+<body>
+    <h1>Facit Program för Driftstoppsanalys</h1>
+    <p>Ladda upp din CSV-fil här:</p>
+    <input type="file" id="fileInput" accept=".csv">
+    <button onclick="analyzeData()">Analysera</button>
+    <div id="result"></div>
+
+    <!-- iPad/Touch Controls -->
+    <div class="ipad-controls">
+        <button id="enterButton" class="touch-button">Press Enter</button>
+        <button id="oneButton" class="touch-button">Press 1</button>
+    </div>
+
+    <script defer>
+        function analyzeData() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Vänligen ladda upp en CSV-fil först!');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const csvData = event.target.result;
+                const parsedData = Papa.parse(csvData, { 
+                    header: true, 
+                    encoding: 'UTF-8', 
+                    skipEmptyLines: true 
+                }).data;
+
+                // Filtrera bort ogiltiga rader och hantera datum
+                const filteredData = parsedData.filter(row => 
+                    row['Start date'] && parseFloat(row['Tid']) > 0 && row['Reason 1'] !== 'Reducerad hastighet'
+                ).map(row => {
+                    let startDate = moment(row['Start date'], ['YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD HH:mm', 'DD/MM/YYYY HH:mm:ss'], true);
+                    if (!startDate.isValid()) {
+                        console.warn(`Ogiltigt datumformat för: ${row['Start date']}`);
+                        startDate = moment('Invalid Date');
+                    }
+                    return {
+                        start: startDate,
+                        tid: parseFloat(row['Tid']),
+                        reason1: row['Reason 1'],
+                        equipment: row['Equipment'],
+                        description: row['Detailed description'] || 'Ingen kommentar'
+                    };
+                });
+
+                // Definiera kategorier med nyckelord för "XXXTEST"
+                const categoryPatterns = {
+                    'Rengöring': ['cop', 'rengöring', 'cleaning', 'städning'],
+                    'Utbildning': ['utbildning', 'träning', 'personal'],
+                    'Underhåll': ['underhåll', 'service', 'reparation'],
+                    'Övrigt': []
+                };
+
+                // Kategorisera "XXXTEST" baserat på beskrivningar
+                filteredData.forEach(row => {
+                    if (row.equipment === 'XXXTEST') {
+                        const descLower = (row.description || '').toLowerCase();
+                        let category = 'Övrigt'; // Standardkategori
+                        for (const [cat, patterns] of Object.entries(categoryPatterns)) {
+                            if (patterns.some(pattern => descLower.includes(pattern))) {
+                                category = cat;
+                                break;
+                            }
+                        }
+                        row.equipment = category; // Ersätt "XXXTEST" med kategorin
+                    }
+                });
+
+                // Summera total tid
+                const totalTime = filteredData.reduce((sum, row) => sum + row.tid, 0);
+
+                // 1. Sammanfattning per orsak
+                const summaryByReason = {};
+                filteredData.forEach(row => {
+                    const reason = row.reason1;
+                    if (!summaryByReason[reason]) {
+                        summaryByReason[reason] = { time: 0, count: 0 };
+                    }
+                    summaryByReason[reason].time += row.tid;
+                    summaryByReason[reason].count += 1;
+                });
+
+                // 2. Mest problematiska utrustningar/aktiviteter
+                const summaryByEquipment = {};
+                filteredData.forEach(row => {
+                    const equipment = row.equipment;
+                    if (!summaryByEquipment[equipment]) {
+                        summaryByEquipment[equipment] = { time: 0, count: 0, reasons: {} };
+                    }
+                    summaryByEquipment[equipment].time += row.tid;
+                    summaryByEquipment[equipment].count += 1;
+                    summaryByEquipment[equipment].reasons[row.reason1] = (summaryByEquipment[equipment].reasons[row.reason1] || 0) + row.tid;
+                });
+
+                // 3. Omställningsanalys (sortbyten) - dynamisk och öppen
+                const sortbyten = filteredData.filter(row => row.reason1 === '05. Sortbyte');
+                const afterSortbyteIssues = [];
+                sortbyten.forEach(sortbyte => {
+                    const issues = filteredData.filter(row => 
+                        row.start.isValid() && row.start.isBetween(sortbyte.start, sortbyte.start.clone().add(2, 'hours')) && 
+                        row.reason1 !== '05. Sortbyte'
+                    );
+                    afterSortbyteIssues.push(...issues);
+                });
+
+                const issuesByDescriptionAfterSortbyte = {};
+                afterSortbyteIssues.forEach(issue => {
+                    const descLower = issue.description.toLowerCase();
+                    if (!issuesByDescriptionAfterSortbyte[descLower]) {
+                        issuesByDescriptionAfterSortbyte[descLower] = { time: 0, count: 0 };
+                    }
+                    issuesByDescriptionAfterSortbyte[descLower].time += issue.tid;
+                    issuesByDescriptionAfterSortbyte[descLower].count += 1;
+                });
+
+                const topIssuesAfterSortbyte = Object.entries(issuesByDescriptionAfterSortbyte)
+                    .sort((a, b) => b[1].time - a[1].time) // Sortera efter total tid
+                    .slice(0, 3); // Ta de tre mest tidskrävande problemen
+
+                // 4. Rotorsaksanalys - dynamisk och öppen
+                // Extrahera alla unika problem från beskrivningar
+                const allIssues = {};
+                filteredData.forEach(row => {
+                    const descLower = row.description.toLowerCase();
+                    if (descLower && descLower !== 'ingen kommentar') {
+                        // Dela upp beskrivningen i ord och hitta potentiella problem
+                        const words = descLower.split(/\s+|,|-/); // Dela på mellanslag, kommatecken eller bindestreck
+                        words.forEach(word => {
+                            if (word.length > 3 && !/^\d+$/.test(word)) { // Ignorera korta ord och nummer
+                                allIssues[word] = (allIssues[word] || 0) + row.tid; // Summera tid per problem
+                            }
+                        });
+                    }
+                });
+
+                // Filtrera och sortera de mest tidskrävande problemen
+                const significantIssues = Object.entries(allIssues)
+                    .sort((a, b) => b[1] - a[1]) // Sortera efter total tid (nedstigande)
+                    .slice(0, 5); // Ta de fem mest tidskrävande problemen
+
+                // 5. Detaljerad analys av Övrigt
+                const ovrigtEvents = filteredData.filter(row => row.equipment === 'Övrigt');
+
+                // Bygg resultat
+                let resultHTML = '';
+
+                // 1. Sammanfattning
+                resultHTML += '<h2>1. Sammanfattning av driftstopp</h2>';
+                resultHTML += `<p>Total stopptid: ${totalTime.toFixed(2)} minuter (${(totalTime / 60).toFixed(2)} timmar)</p>`;
+                resultHTML += '<table><tr><th>Orsak</th><th>Tid (min)</th><th>Procent</th><th>Antal</th></tr>';
+                for (const [reason, data] of Object.entries(summaryByReason)) {
+                    const percentage = ((data.time / totalTime) * 100).toFixed(2);
+                    resultHTML += `<tr><td>${reason}</td><td>${data.time.toFixed(2)}</td><td>${percentage}%</td><td>${data.count}</td></tr>`;
+                }
+                resultHTML += '</table>';
+
+                // 2. Mest problematiska utrustningar/aktiviteter
+                resultHTML += '<h2>2. Mest problematiska utrustningar/aktiviteter</h2>';
+                resultHTML += '<table><tr><th>Utrustning/Aktivitet</th><th>Tid (min)</th><th>Antal</th><th>Vanligaste orsaker</th></tr>';
+                const topEquipment = Object.entries(summaryByEquipment)
+                    .sort((a, b) => b[1].time - a[1].time)
+                    .slice(0, 5);
+                for (const [equipment, data] of topEquipment) {
+                    const topReasons = Object.entries(data.reasons)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 2)
+                        .map(([reason, time]) => `${reason} (${time.toFixed(2)} min)`);
+                    resultHTML += `<tr><td>${equipment}</td><td>${data.time.toFixed(2)}</td><td>${data.count}</td><td>${topReasons.join(', ')}</td></tr>`;
+                }
+                resultHTML += '</table>';
+
+                // 3. Omställningsanalys - dynamisk och öppen
+                resultHTML += '<h2>3. Omställningsanalys (sortbyten)</h2>';
+                if (sortbyten.length > 0) {
+                    resultHTML += `<p>Antal sortbyten: ${sortbyten.length}</p>`;
+                    resultHTML += '<p>De största problemen inom 2 timmar efter sortbyte (baserat på total tid):</p><ul>';
+                    if (topIssuesAfterSortbyte.length > 0) {
+                        topIssuesAfterSortbyte.forEach(([description, { time, count }]) => {
+                            const cleanDescription = description.charAt(0).toUpperCase() + description.slice(1).replace(/[^\w\s]/g, ''); // Rengör texten
+                            resultHTML += `<li>${cleanDescription}: ${count} händelser, ${time.toFixed(2)} min</li>`;
+                        });
+                    } else {
+                        resultHTML += '<li>Inga signifikanta problem identifierades efter sortbyten.</li>';
+                    }
+                    resultHTML += '</ul>';
+                    resultHTML += '<div class="solution"><strong>Lösning:</strong> Fokusera på att stabilisera processen direkt efter sortbyten. De största problemen som negativt påverkar linjen är ';
+                    resultHTML += topIssuesAfterSortbyte.map(([desc]) => desc.charAt(0).toUpperCase() + desc.slice(1).replace(/[^\w\s]/g, '')).join(', ') + '. Se över kalibrering, utrustning och operatörsträning vid omställningar för att lösa dessa problem.</div>';
+                } else {
+                    resultHTML += '<p>Inga sortbyten registrerade.</p>';
+                }
+
+                // 4. Rotorsaksanalys - dynamisk och öppen
+                resultHTML += '<h2>4. Rotorsaksanalys</h2><ul>';
+                if (significantIssues.length > 0) {
+                    resultHTML += '<p>Följande områden påverkar linjen mest negativt och bör prioriteras (baserat på total stopptid):</p>';
+                    significantIssues.forEach(([issue, totalTime]) => {
+                        let solution = '';
+                        const cleanIssue = issue.charAt(0).toUpperCase() + issue.slice(1).replace(/[^\w\s]/g, ''); // Rengör texten
+                        switch (true) {
+                            case /falsk?rasch|krasch/i.test(issue):
+                                solution = 'Inspektera och reparera falsverktygen på tappmaskinen. Kontrollera också inmatningsskruven för skador.';
+                                break;
+                            case /inmatning|inmatningsskruv|inmatningsfel/i.test(issue):
+                                solution = 'Smörj och justera inmatningsskruven på tappmaskinen. Kontrollera gejdrar och burkflöde.';
+                                break;
+                            case /burk|liggande|bucklig/i.test(issue):
+                                solution = 'Kontrollera pallkvalitet och justera gejdrar på burkbanorna.';
+                                break;
+                            case /pallastaren|pallastare/i.test(issue):
+                                solution = 'Inspektera och reparera pallastaren. Kontrollera drivmekanismen och sensorerna för fel.';
+                                break;
+                            case /sensor|trykkfall|fel/i.test(issue):
+                                solution = 'Undersök och reparera sensorer eller system som påverkas av tryckfall eller fel. Kontrollera loggar och kalibrering.';
+                                break;
+                            default:
+                                solution = 'Undersök orsaken till detta problem och vidta lämpliga åtgärder baserat på dokumentationen och utrustningsmanualer.';
+                        }
+                        resultHTML += `<li>${cleanIssue} nämns och orsakar ${totalTime.toFixed(2)} min stopptid. <strong>Lösning:</strong> ${solution}</li>`;
+                    });
+                } else {
+                    resultHTML += '<li>Inga signifikanta rotorsaker identifierades baserat på beskrivningarna.</li>';
+                }
+                resultHTML += '</ul>';
+
+                // 5. Detaljerad analys av Övrigt
+                if (ovrigtEvents.length > 0) {
+                    resultHTML += '<h2>5. Detaljerad analys av Övrigt</h2>';
+                    resultHTML += '<p>Följande händelser kategoriserades som "Övrigt" och kräver manuell granskning:</p>';
+                    resultHTML += '<table><tr><th>Starttid</th><th>Tid (min)</th><th>Kommentar</th></tr>';
+                    ovrigtEvents.forEach(event => {
+                        const startText = event.start.isValid() ? event.start.format('YYYY-MM-DD HH:mm:ss') : 'Ogiltigt datum';
+                        resultHTML += `<tr><td>${startText}</td><td>${event.tid.toFixed(2)}</td><td>${escapeHtml(event.description)}</td></tr>`;
+                    });
+                    resultHTML += '</table>';
+                } else {
+                    resultHTML += '<p>Inga händelser kategoriserades som "Övrigt".</p>';
+                }
+
+                // 6. Generella rekommendationer
+                resultHTML += '<h2>6. Generella rekommendationer</h2><ul>';
+                if (significantIssues.length > 0) {
+                    resultHTML += '<li><strong>Fokusera på de största problemen:</strong> De områden som negativt påverkar linjen mest är listade i Rotorsaksanalysen ovan. Prioritera dessa för att minska stopptiden.</li>';
+                }
+                const criticalEquipment = Object.entries(summaryByEquipment).find(([_, data]) => data.time > totalTime * 0.2);
+                if (criticalEquipment && criticalEquipment[0] !== 'Övrigt') {
+                    const [equipmentName] = criticalEquipment;
+                    resultHTML += `<li><strong>Prioritera underhåll på ${equipmentName}:</strong> Denna utrustning/aktivitet står för över 20% av stopptiden.</li>`;
+                }
+                if (ovrigtEvents.length > 0) {
+                    resultHTML += '<li><strong>Granska "Övrigt"-händelser:</strong> Dessa händelser kräver manuell analys för att identifiera rotorsaker.</li>';
+                }
+                resultHTML += '</ul>';
+
+                // Hjälpmetod för att undvika HTML-sprickor i kommentarer
+                function escapeHtml(unsafe) {
+    return (unsafe || 'Ingen kommentar')
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+
+                document.getElementById('result').innerHTML = resultHTML;
+            };
+
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if the device is touch-enabled
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            
+            // Show iPad controls only on touch devices
+            const ipadControls = document.querySelector('.ipad-controls');
+            if (ipadControls) {
+                ipadControls.style.display = isTouchDevice ? 'flex' : 'none';
+            }
+            
+            // Set up the Enter button
+            const enterButton = document.getElementById('enterButton');
+            if (enterButton) {
+                enterButton.addEventListener('click', function() {
+                    // Create and dispatch an Enter key event
+                    const enterEvent = new KeyboardEvent('keydown', {
+                        key: 'Enter',
+                        code: 'Enter',
+                        keyCode: 13,
+                        which: 13,
+                        bubbles: true
+                    });
+                    document.dispatchEvent(enterEvent);
+                });
+            }
+            
+            // Set up the One button
+            const oneButton = document.getElementById('oneButton');
+            if (oneButton) {
+                oneButton.addEventListener('click', function() {
+                    // Create and dispatch a '1' key event
+                    const oneEvent = new KeyboardEvent('keydown', {
+                        key: '1',
+                        code: 'Digit1',
+                        keyCode: 49,
+                        which: 49,
+                        bubbles: true
+                    });
+                    document.dispatchEvent(oneEvent);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
