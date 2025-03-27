@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+v<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1256,6 +1256,7 @@ body.light-theme {
     <div id="debug-controls" style="position: fixed; bottom: 20px; left: 20px; z-index: 1001; display: flex; gap: 10px;">
         <button id="triggerErrorBtn" style="background-color: #2b3239; color: white; padding: 15px 20px; border-radius: 8px; border: none; font-weight: 600; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">Trigger Error (Enter)</button>
         <button id="triggerPalletizerBtn" style="background-color: #2b3239; color: white; padding: 15px 20px; border-radius: 8px; border: none; font-weight: 600; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">Trigger Palletizer (1)</button>
+        <button id="triggerChangeoverBtn" style="background-color: #2b3239; color: white; padding: 15px 20px; border-radius: 8px; border: none; font-weight: 600; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);">Trigger Changeover (3)</button>
     </div>
 
     <script>
@@ -3217,6 +3218,19 @@ body.light-theme {
             
             scrollChatToBottom();
         }
+
+        // Add this to your existing JavaScript, near where the other button event listeners are defined
+        // filepath: c:\Users\SEALBKEV\OneDrive - Carlsberg Group\Desktop\mockuptest.html
+        document.getElementById('triggerChangeoverBtn').addEventListener('click', function() {
+            setupChangeoverMode();
+        });
+
+        // Tangentbordshanteraren (ser redan ut att använda setupChangeoverMode)
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '3') {
+                setupChangeoverMode();
+            }
+        });
     </script>
 </body>
 </html>
