@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+v<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1057,7 +1057,7 @@ body.light-theme {
                     <div class="status-icon-container">
                         <i class="fas fa-check-circle status-icon"></i>
                     </div>
-                    <h2>Tray Packer</h2>
+                    <h2>Packaging</h2>
                     <p>Running</p>
                     <p>1,245 Units packed</p>
                 </div>
@@ -1731,6 +1731,1492 @@ body.light-theme {
                 });
             }
         });
+
+        // Add to your existing JavaScript, at the end of the script section
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '2') {
+                startPalletizerCopilotScenario();
+            }
+        });
+
+        function startPalletizerCopilotScenario() {
+            const palletizer = document.getElementById('palletizer');
+            updateMachineStatus('palletizer', 'error');
+            palletizer.classList.add('error', 'focus');
+            
+            showAlert('error', 'FEL: Palletizer har stannat - Kontakta underhåll');
+            
+            // Create dynamic copilot button specific to this problem
+            const dynamicCopilotBtn = document.createElement('div');
+            dynamicCopilotBtn.className = 'dynamic-copilot-button';
+            dynamicCopilotBtn.innerHTML = '<i class="fas fa-robot"></i> Line Coach';
+            
+            // Position it under the palletizer
+            const rect = palletizer.getBoundingClientRect();
+            dynamicCopilotBtn.style.position = 'absolute';
+            dynamicCopilotBtn.style.top = `${rect.bottom + 10}px`;
+            dynamicCopilotBtn.style.left = `${rect.left + (rect.width/2) - 60}px`;
+            
+            document.querySelector('.container').appendChild(dynamicCopilotBtn);
+            
+            // Add click event to open specialized copilot chat
+            dynamicCopilotBtn.addEventListener('click', function() {
+                openDowntimeAssistant();
+            });
+        }
+
+        function openDowntimeAssistant() {
+            const chatContainer = document.getElementById("chatContainer");
+            const chatMessages = document.getElementById("chatMessages");
+            
+            // Clear previous messages
+            chatMessages.innerHTML = '';
+            
+            // Show chat
+            chatContainer.style.display = "flex";
+            
+            // Add introduction message
+            const introMessage = document.createElement("div");
+            introMessage.className = "system-message";
+            introMessage.innerHTML = `
+                <strong>Hello, I'm Line Coach Downtime Copilot</strong>, a virtual assistant to help you investigate and document downtime problems in the line.
+                <br><br>
+                What do you want to do?
+                <br><br>
+                <button class="copilot-option" onclick="selectOption('investigate')">Investigate current downtime incident</button>
+                <button class="copilot-option" onclick="selectOption('document')">Document a resolved downtime incident</button>
+                <button class="copilot-option" onclick="selectOption('help')">Help with instructions/Manual/Documents</button>
+            `;
+            chatMessages.appendChild(introMessage);
+            scrollChatToBottom();
+        }
+
+        // Add this function to scroll to the bottom of the chat when new content is added
+        function scrollChatToBottom() {
+            const chatMessages = document.getElementById("chatMessages");
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Modify the selectOption function to include scrolling
+        function selectOption(option) {
+            const chatMessages = document.getElementById("chatMessages");
+            
+            if (option === 'investigate') {
+                const responseMessage = document.createElement("div");
+                responseMessage.className = "system-message";
+                responseMessage.innerHTML = `
+                    <strong>Investigating Palletizer Downtime</strong>
+                    <br><br>
+                    I've detected that the palletizer has stopped. To help diagnose the problem, please specify which area of the palletizer is experiencing issues:
+                    <br><br>
+                    <div class="palletizer-areas">
+                        <button class="copilot-option" onclick="selectPalletizerArea('robot')">Pallrobot</button>
+                        <button class="copilot-option" onclick="selectPalletizerArea('filler')">Pallfyllare 1-2</button>
+                        <button class="copilot-option" onclick="selectPalletizerArea('turbo')">Turbo 1-2</button>
+                        <button class="copilot-option" onclick="selectPalletizerArea('printer')">Skrivare och scanner</button>
+                        <button class="copilot-option" onclick="selectPalletizerArea('ls')">LS</button>
+                        <button class="copilot-option" onclick="selectPalletizerArea('shuttle')">Bema skyttel</button>
+                        <button class="copilot-option" onclick="selectPalletizerArea('empty')">Tompallsområdet</button>
+                    </div>
+                `;
+                chatMessages.appendChild(responseMessage);
+                scrollChatToBottom();
+            } else if (option === 'document') {
+                // Rest of the document code...
+                chatMessages.appendChild(responseMessage);
+                scrollChatToBottom();
+            } else if (option === 'help') {
+                // Rest of the help code...
+                chatMessages.appendChild(responseMessage);
+                scrollChatToBottom();
+            }
+        }
+
+        // Update other functions to include scrolling
+        function selectPalletizerArea(area) {
+            const chatMessages = document.getElementById("chatMessages");
+            const areaMessage = document.createElement("div");
+            areaMessage.className = "system-message";
+            
+            // For LS area, show detailed issue selection as specified
+            if (area === 'ls') {
+                areaMessage.innerHTML = `
+                    <strong>LS Area Issue Detected</strong>
+                    <br><br>
+                    Based on my diagnostics, there could be several issues with the LS area.
+                    <br><br>
+                    <strong>Select the most probable issue or specify another problem:</strong>
+                    <br><br>
+                    <button class="copilot-option" onclick="selectIssue('pallet_stuck')">Pallet stuck</button>
+                    <button class="copilot-option" onclick="selectIssue('wrap_issue')">Won't wrap the pallet properly</button>
+                    <button class="copilot-option" onclick="selectIssue('wire_overheat')">Wire overheat</button>
+                    <button class="copilot-option" onclick="selectIssue('pallet_movement')">Pallet won't move</button>
+                    <button class="copilot-option" onclick="selectIssue('other')">Other (Write manual)</button>
+                    <button class="copilot-option" onclick="selectIssue('resolved')">The issue is already resolved</button>
+                `;
+            } else {
+                // Generic response for other areas
+                const areaNames = {
+                    'robot': 'Pallrobot',
+                    'filler': 'Pallfyllare 1-2',
+                    'turbo': 'Turbo 1-2',
+                    'printer': 'Skrivare och scanner',
+                    'shuttle': 'Bema skyttel',
+                    'empty': 'Tompallsområdet'
+                };
+                
+                areaMessage.innerHTML = `
+                    <strong>${areaNames[area]} Issue</strong>
+                    <br><br>
+                    I'm analyzing potential problems in the ${areaNames[area]}.
+                    <br><br>
+                    <p>Checking error logs and sensor data...</p>
+                    <br>
+                    <button class="copilot-option" onclick="showTechnicalDetails()">Show technical details</button>
+                    <button class="copilot-option" onclick="contactMaintenance()">Contact maintenance team</button>
+                `;
+            }
+            
+            chatMessages.appendChild(areaMessage);
+            scrollChatToBottom();
+        }
+
+        function selectIssue(issue) {
+            const chatMessages = document.getElementById("chatMessages");
+            const issueMessage = document.createElement("div");
+            issueMessage.className = "system-message";
+            
+            if (issue === 'pallet_stuck') {
+                issueMessage.innerHTML = `
+                    <strong>Pallet Stuck Issue - Troubleshooting Guide</strong>
+                    <br><br>
+                    <strong>Common Causes:</strong>
+                    <ul>
+                        <li>Misaligned pallet in the feed system</li>
+                        <li>Debris or foreign object in the conveyor</li>
+                        <li>Sensor S23 malfunction</li>
+                        <li>Mechanical jam in the transport mechanism</li>
+                    </ul>
+                    <br>
+                    <strong>Recommended Actions:</strong>
+                    <ol>
+                        <li>Verify there are no physical obstructions in the LS area</li>
+                        <li>Check if the pallet is properly aligned</li>
+                        <li>Clear any debris from the transport rails</li>
+                        <li>Press the yellow reset button after clearing obstructions</li>
+                        <li>If problem persists, perform a full system restart</li>
+                    </ol>
+                    <br>
+                    <strong>Historical Data:</strong> This issue has occurred 3 times in the last month, typically resolved within 15 minutes.
+                    <br><br>
+                    <button class="copilot-option" onclick="showTechnicalDetails()">Show technical details</button>
+                    <button class="copilot-option" onclick="contactMaintenance()">Contact maintenance team</button>
+                `;
+            } else if (issue === 'resolved') {
+                issueMessage.innerHTML = `
+                    <strong>Issue Resolution Confirmed</strong>
+                    <br><br>
+                    Great! I'll mark this incident as resolved.
+                    <br><br>
+                    Would you like to document what the issue was and how it was resolved for future reference?
+                    <br><br>
+                    <button class="copilot-option" onclick="selectOption('document')">Document the resolution</button>
+                    <button class="copilot-option" onclick="openDowntimeAssistant()">Return to main menu</button>
+                `;
+            } else {
+                // Generic response for other issues
+                const issueNames = {
+                    'wrap_issue': 'pallet wrapping problem',
+                    'wire_overheat': 'wire overheating',
+                    'pallet_movement': 'pallet movement failure',
+                    'other': 'manually specified issue'
+                };
+                
+                let issueName = issueNames[issue] || 'specified issue';
+                
+                if (issue === 'other') {
+                    issueMessage.innerHTML = `
+                        <strong>Custom Issue Description</strong>
+                        <br><br>
+                        Please describe the issue you're experiencing:
+                        <br><br>
+                        <textarea id="customIssue" rows="3" style="width: 100%; background-color: #1c252b; color: white; border: 1px solid #3a3f44; border-radius: 4px; padding: 8px;"></textarea>
+                        <br><br>
+                        <button class="copilot-option" onclick="submitCustomIssue()">Submit Description</button>
+                    `;
+                } else {
+                    issueMessage.innerHTML = `
+                        <strong>${issueName.charAt(0).toUpperCase() + issueName.slice(1)} - Troubleshooting Guide</strong>
+                        <br><br>
+                        I'm gathering information about this specific issue. This might take a few moments...
+                        <br><br>
+                        <button class="copilot-option" onclick="showTechnicalDetails()">Show technical details</button>
+                        <button class="copilot-option" onclick="contactMaintenance()">Contact maintenance team</button>
+                    `;
+                }
+            }
+            
+            chatMessages.appendChild(issueMessage);
+            scrollChatToBottom();
+        }
+
+        function submitCustomIssue() {
+            const customIssueText = document.getElementById('customIssue').value.trim();
+            const chatMessages = document.getElementById("chatMessages");
+            
+            if (customIssueText === '') {
+                alert('Please enter a description of the issue.');
+                return;
+            }
+            
+            const customResponseMessage = document.createElement("div");
+            customResponseMessage.className = "system-message";
+            customResponseMessage.innerHTML = `
+                <strong>Custom Issue Recorded</strong>
+                <br><br>
+                I've recorded the following issue: "${customIssueText}"
+                <br><br>
+                <strong>Next Steps:</strong>
+                <ol>
+                    <li>I'll forward this information to our technical team</li>
+                    <li>Maintenance has been notified</li>
+                    <li>A specialist will be assigned to investigate this specific issue</li>
+                </ol>
+                <br>
+                <strong>ETA for response:</strong> 15-20 minutes
+                <br><br>
+                <button class="copilot-option" onclick="contactMaintenance()">Contact maintenance directly</button>
+                <button class="copilot-option" onclick="openDowntimeAssistant()">Return to main menu</button>
+            `;
+            chatMessages.appendChild(customResponseMessage);
+            scrollChatToBottom();
+        }
+
+        // Add this CSS to enhance the palletizer areas display
+        const additionalStyle = document.createElement('style');
+        additionalStyle.textContent = `
+        .palletizer-areas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        `;
+
+        document.head.appendChild(additionalStyle);
+
+        function showTechnicalDetails() {
+            const chatMessages = document.getElementById("chatMessages");
+            const technicalMessage = document.createElement("div");
+            technicalMessage.className = "system-message";
+            technicalMessage.innerHTML = `
+                <strong>Technical Details:</strong>
+                <br><br>
+                <strong>Error Code:</strong> PAL-2345<br>
+                <strong>Component:</strong> Pallet Magazine Feed System<br>
+                <strong>Last Service:</strong> 2025-03-15<br>
+                <strong>Failure History:</strong> Similar issue occurred 3 times in past month<br>
+                <br>
+                <strong>Diagnostic Information:</strong><br>
+                - Sensor S45 reported obstruction at 14:32:45<br>
+                - Drive motor M3 stopped due to overload protection<br>
+                - System waiting for manual reset<br>
+                <br>
+                <img src="https://via.placeholder.com/300x200" alt="Palletizer Diagram" style="max-width:100%;">
+            `;
+            chatMessages.appendChild(technicalMessage);
+            scrollChatToBottom();
+        }
+
+        function contactMaintenance() {
+            const chatMessages = document.getElementById("chatMessages");
+            const contactMessage = document.createElement("div");
+            contactMessage.className = "system-message";
+            contactMessage.innerHTML = `
+                <strong>Maintenance Team Contacted</strong>
+                <br><br>
+                I've sent a notification to the maintenance team about the palletizer issue.
+                <br><br>
+                <strong>Maintenance Contact:</strong> Peter Andersson<br>
+                <strong>Team:</strong> Mechanical Engineering<br>
+                <strong>ETA:</strong> 15 minutes<br>
+                <br>
+                <strong>Status:</strong> <span style="color:#4caf50">✓ Request Confirmed</span>
+            `;
+            chatMessages.appendChild(contactMessage);
+            scrollChatToBottom();
+        }
+
+        function showDocument(docType) {
+            const chatMessages = document.getElementById("chatMessages");
+            const docMessage = document.createElement("div");
+            docMessage.className = "system-message";
+            
+            let content = '<strong>Document Not Found</strong>';
+            
+            if (docType === 'manual') {
+                content = `
+                    <strong>Palletizer Equipment Manual</strong>
+                    <br><br>
+                    <iframe src="about:blank" style="width:100%;height:200px;border:1px solid #3a3f44;background:#1c252b;" frameborder="0"></iframe>
+                    <br><br>
+                    <em>Palletizer Model: OCME DRN-450</em><br>
+                    <em>Manual Version: 3.2.1</em><br>
+                    <em>Last Updated: January 2025</em>
+                `;
+            } else if (docType === 'troubleshooting') {
+                content = `
+                    <strong>Troubleshooting Guide</strong>
+                    <br><br>
+                    <strong>Common Issues:</strong>
+                    <ul>
+                        <li>Pallet jam in magazine (PAL-2345)</li>
+                        <li>Layer formation error (PAL-1122)</li>
+                        <li>Transfer belt slippage (PAL-5678)</li>
+                        <li>Control system timeout (PAL-9900)</li>
+                    </ul>
+                    <br>
+                    <a href="#" onclick="expandTroubleshooting()">View Full Troubleshooting Guide</a>
+                `;
+            }
+            
+            docMessage.innerHTML = content;
+            chatMessages.appendChild(docMessage);
+            scrollChatToBottom();
+        }
+
+        function submitDowntimeReport() {
+            const duration = document.getElementById('duration').value;
+            const cause = document.getElementById('cause').value;
+            const resolution = document.getElementById('resolution').value;
+            
+            if (!duration || !resolution) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const chatMessages = document.getElementById("chatMessages");
+            const confirmMessage = document.createElement("div");
+            confirmMessage.className = "system-message";
+            confirmMessage.innerHTML = `
+                <strong>Downtime Report Submitted</strong>
+                <br><br>
+                Thank you for documenting this incident. Your report has been added to the system.
+                <br><br>
+                <strong>Report Summary:</strong><br>
+                - Incident: Palletizer Failure<br>
+                - Duration: ${duration} minutes<br>
+                - Root Cause: ${cause}<br>
+                - Resolution: ${resolution}<br>
+                <br>
+                <span style="color:#4caf50">✓ Report #DT-${Math.floor(Math.random() * 10000)} created successfully</span>
+            `;
+            chatMessages.appendChild(confirmMessage);
+            scrollChatToBottom();
+        }
+
+        // Add this CSS to support the new dynamic copilot button
+        const style = document.createElement('style');
+        style.textContent = `
+        .dynamic-copilot-button {
+            width: 120px;
+            height: 40px;
+            border-radius: 20px;
+            background-color: #4caf50;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        .dynamic-copilot-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        .copilot-option {
+            background-color: #1c252b;
+            color: white;
+            border: 1px solid #3a3f44;
+            border-radius: 4px;
+            padding: 8px 15px;
+            margin: 5px 5px 5px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copilot-option:hover {
+            background-color: #4caf50;
+            border-color: #4caf50;
+        }
+
+        .light-theme .copilot-option {
+            background-color: #f4f7fa;
+            color: #333333;
+            border: 1px solid #e0e0e0;
+        }
+
+        .light-theme .copilot-option:hover {
+            background-color: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+
+        #downtimeForm input, 
+        #downtimeForm select, 
+        #downtimeForm textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            background-color: #1c252b;
+            border: 1px solid #3a3f44;
+            color: white;
+            border-radius: 4px;
+        }
+
+        .light-theme #downtimeForm input, 
+        .light-theme #downtimeForm select, 
+        .light-theme #downtimeForm textarea {
+            background-color: #f4f7fa;
+            border: 1px solid #e0e0e0;
+            color: #333333;
+        }
+        `;
+
+        document.head.appendChild(style);
+
+        // Add to your existing JavaScript, at the end of the script section
+        document.addEventListener('keydown', function(event) {
+            if (event.key === '3') { // Changed from '2' to '3'
+                setupChangeoverMode();
+            }
+        });
+
+        // Separate the UI setup from the copilot opening
+        function setupChangeoverMode() {
+            // Create dynamic changeover copilot button with same appearance as main copilot button
+            const changeoverCopilotBtn = document.createElement('div');
+            changeoverCopilotBtn.className = 'copilot-button changeover-copilot'; // Changed to use same class as main copilot
+            changeoverCopilotBtn.innerHTML = '<i class="fas fa-exchange-alt"></i>'; // Only use icon for consistency
+            
+            // Position it near the status bar on the RIGHT side
+            const statusBar = document.querySelector('.status-bar');
+            const rect = statusBar.getBoundingClientRect();
+            changeoverCopilotBtn.style.position = 'absolute';
+            changeoverCopilotBtn.style.top = `${rect.bottom + 10}px`;
+            changeoverCopilotBtn.style.right = `20px`; // Position on right side
+            changeoverCopilotBtn.style.zIndex = '1010'; // Ensure high z-index
+            
+            document.querySelector('.container').appendChild(changeoverCopilotBtn);
+            
+            // Highlight current product in status bar to indicate changeover mode
+            statusBar.classList.add('changeover-mode');
+            
+            // Create and activate the overlay blur effect
+            const changeoverOverlay = document.createElement('div');
+            changeoverOverlay.className = 'changeover-overlay';
+            document.body.appendChild(changeoverOverlay);
+            
+            // Apply focus effect to production overview section
+            const productionOverview = document.querySelector('.production-overview');
+            productionOverview.classList.add('changeover-focus');
+            
+            // Add class to body to manage global blur state
+            document.body.classList.add('changeover-active');
+            
+            // Create spotlight effect to better highlight the machines
+            const spotlight = document.createElement('div');
+            spotlight.className = 'machine-spotlight';
+            document.body.appendChild(spotlight);
+            
+            // Get machine elements
+            const filler = document.getElementById('filler');
+            const depalletizer = document.getElementById('depalletizer');
+            const palletizer = document.getElementById('palletizer');
+            const shrinkpacker = document.getElementById('shrinkpacker');
+            const trayPacker = document.querySelectorAll('.card')[2]; // Third card should be tray packer
+            
+            // Hide shrinkpacker when triggering changeover mode
+            shrinkpacker.style.display = 'none';
+            
+            // Initial state - Filler grön, övriga gula eller vita
+            filler.classList.add('changeover-complete');
+            depalletizer.classList.add('changeover-in-progress');
+            trayPacker.classList.add('changeover-in-progress');
+            // Palletizer utan klass (ej påbörjad)
+            
+            // Uppdatera statusikoner
+            filler.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+            depalletizer.querySelector('.status-icon').style.color = '#ff9800'; // Gul
+            trayPacker.querySelector('.status-icon').style.color = '#ff9800'; // Gul
+            palletizer.querySelector('.status-icon').style.color = '#aaaaaa'; // Grå/neutral
+            
+            // Uppdatera statustexter
+            filler.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+            depalletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            trayPacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Not Started';
+            
+            // Update second paragraph to show the order they're changing over to
+            filler.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            depalletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            trayPacker.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            palletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            
+            // Add click event to open changeover assistant ONLY when button is clicked
+            changeoverCopilotBtn.addEventListener('click', function() {
+                openChangeoverAssistant();
+            });
+            
+            // Machine status update sequence timing remains the same
+            setTimeout(() => {
+                trayPacker.classList.remove('changeover-in-progress');
+                trayPacker.classList.add('changeover-complete');
+                trayPacker.querySelector('.status-icon').style.color = '#4caf50';
+                trayPacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+            }, 7000);
+            
+            setTimeout(() => {
+                depalletizer.classList.remove('changeover-in-progress');
+                depalletizer.classList.add('changeover-complete');
+                depalletizer.querySelector('.status-icon').style.color = '#4caf50';
+                depalletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+            }, 9000);
+            
+            setTimeout(() => {
+                palletizer.classList.add('changeover-in-progress');
+                palletizer.querySelector('.status-icon').style.color = '#ff9800';
+                palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            }, 11000);
+            
+            setTimeout(() => {
+                palletizer.classList.remove('changeover-in-progress');
+                palletizer.classList.add('changeover-complete');
+                palletizer.querySelector('.status-icon').style.color = '#4caf50';
+                palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+            }, 14000);
+        }
+
+        // Add this CSS to support the changeover mode
+        const changeoverStyle = document.createElement('style');
+        changeoverStyle.textContent = `
+        .status-bar.changeover-mode {
+            border: 2px solid #4caf50;
+            animation: changeover-pulse 2s infinite;
+        }
+
+        .changeover-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1001;
+            pointer-events: none; /* Allow clicks to pass through */
+        }
+
+        .changeover-focus {
+            position: relative;
+            z-index: 1002; /* Above the overlay but below modal windows */
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            animation: focus-pulse 3s infinite;
+        }
+
+        .changeover-copilot {
+            background-color: #4caf50;
+            border: 2px solid white;
+            z-index: 1003; /* Above everything else */
+        }
+
+        .card.changeover-complete {
+            border: 3px solid #4caf50;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+            position: relative;
+            z-index: 1002;
+        }
+
+        .card.changeover-in-progress {
+            border: 3px solid #ff9800;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.6);
+            position: relative;
+            z-index: 1002;
+        }
+
+        @keyframes focus-pulse {
+            0% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.4); }
+            100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
+        }
+
+        @keyframes changeover-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        .changeover-badge {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background-color: #4caf50; 
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1003;
+        }
+
+        .changeover-badge.in-progress {
+            background-color: #ff9800;
+        }
+
+        .changeover-badge.not-started {
+            background-color: #aaaaaa;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .progress-bar-changeover {
+            transition: width 2s ease-in-out;
+        }
+
+        .header, .batch-info, .material-status, .shift-handover, #debug-controls {
+            position: relative;
+            z-index: 1002; /* Keep these accessible during changeover mode */
+        }
+        `;
+
+        document.head.appendChild(changeoverStyle);
+
+        // Fix for the z-index issues in the Material Status, Current Batch, and Upcoming Batch sections
+        // This should be added to your existing JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fix for the z-index issues when changeover mode is activated
+            const originalStyle = document.createElement('style');
+            originalStyle.textContent = `
+                /* Ensure these sections don't appear as overlays in normal mode */
+                .batch-info, 
+                .material-status {
+                    position: relative;
+                    z-index: 1; /* Low z-index in normal mode */
+                }
+                
+                /* When changeover is active, make sure these sections go below the overlay */
+                .changeover-active .batch-info,
+                .changeover-active .material-status {
+                    position: relative;
+                    z-index: 990; /* Below the overlay */
+                    filter: blur(5px); /* Apply blur effect */
+                    pointer-events: none; /* Prevent interaction */
+                }
+                
+                /* Fix for the sniper focus effect on machine sections */
+                .changeover-active .production-overview {
+                    position: relative;
+                    z-index: 1005; /* Above the overlay */
+                    filter: none !important; /* Never blur the machines */
+                    box-shadow: 0 0 40px rgba(255, 255, 255, 0.4);
+                }
+                
+                /* More pronounced highlighting for machines during changeover */
+                .changeover-active .production-overview .card {
+                    transform: scale(1.05);
+                    transition: all 0.5s ease;
+                    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2);
+                    border: 2px solid rgba(255, 255, 255, 0.7);
+                    filter: none !important;
+                }
+            `;
+            document.head.appendChild(originalStyle);
+        });
+
+        // Also modify your startChangeoverCopilotScenario function to explicitly control these sections
+        function startChangeoverCopilotScenario() {
+            // Create dynamic changeover copilot button
+            const changeoverCopilotBtn = document.createElement('div');
+            changeoverCopilotBtn.className = 'dynamic-copilot-button changeover-copilot';
+            changeoverCopilotBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Changeover Coach';
+            
+            // Position it near the status bar on the RIGHT side
+            const statusBar = document.querySelector('.status-bar');
+            const rect = statusBar.getBoundingClientRect();
+            changeoverCopilotBtn.style.position = 'absolute';
+            changeoverCopilotBtn.style.top = `${rect.bottom + 10}px`;
+            changeoverCopilotBtn.style.right = `20px`; // Position on right side
+            changeoverCopilotBtn.style.zIndex = '1010'; // Ensure high z-index
+            
+            document.querySelector('.container').appendChild(changeoverCopilotBtn);
+            
+            // Highlight current product in status bar to indicate changeover mode
+            statusBar.classList.add('changeover-mode');
+            
+            // Create and activate the overlay blur effect
+            const changeoverOverlay = document.createElement('div');
+            changeoverOverlay.className = 'changeover-overlay';
+            document.body.appendChild(changeoverOverlay);
+            
+            // Apply focus effect to production overview section
+            const productionOverview = document.querySelector('.production-overview');
+            productionOverview.classList.add('changeover-focus');
+            
+            // Add class to body to manage global blur state
+            document.body.classList.add('changeover-active');
+            
+            // Create spotlight effect to better highlight the machines
+            const spotlight = document.createElement('div');
+            spotlight.className = 'machine-spotlight';
+            document.body.appendChild(spotlight);
+            
+            // Apply changeover status to machines
+            const filler = document.getElementById('filler');
+            const depalletizer = document.getElementById('depalletizer');
+            const palletizer = document.getElementById('palletizer');
+            const shrinkpacker = document.getElementById('shrinkpacker');
+            const trayPacker = document.querySelectorAll('.card')[2]; // Third card should be tray packer
+            
+            // Ändra statuserna - ENDAST Filler ska vara grön (klar)
+            filler.classList.add('changeover-complete');
+            
+            // Dessa ska vara gula (pågående)
+            depalletizer.classList.add('changeover-in-progress');
+            trayPacker.classList.add('changeover-in-progress');
+            shrinkpacker.classList.add('changeover-in-progress');
+            
+            // Palletizer ska vara i normalläge (ej påbörjad)
+            // Vi lägger inte till någon klass till palletizer
+            
+            // Uppdatera status icon färger (optional)
+            filler.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+            depalletizer.querySelector('.status-icon').style.color = '#ff9800'; // Gul/orange
+            trayPacker.querySelector('.status-icon').style.color = '#ff9800'; // Gul/orange
+            shrinkpacker.querySelector('.status-icon').style.color = '#ff9800'; // Gul/orange
+            
+            // Update machine info text
+            filler.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+            depalletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            trayPacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            shrinkpacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Not Started';
+            
+            // Update second paragraph to show the order they're changing over to
+            filler.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            depalletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            trayPacker.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            shrinkpacker.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            palletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            
+            // Add click event to open changeover assistant
+            changeoverCopilotBtn.addEventListener('click', function() {
+                openChangeoverAssistant();
+            });
+            
+            // Auto-open the assistant after 2 seconds
+            setTimeout(() => {
+                openChangeoverAssistant();
+            }, 2000);
+        }
+
+        // Lägg till detta CSS för att tydligare visa statusfärgerna på maskinkanten
+        const changeover_border_styles = document.createElement('style');
+        changeover_border_styles.textContent = `
+            /* Ensure chat is always visible during changeover */
+            #chatContainer {
+                z-index: 1010 !important;
+                position: relative !important;
+                filter: none !important;
+                pointer-events: all !important;
+            }
+            
+            /* Tydligare färgkoder för changeover status */
+            .card.changeover-complete {
+                border: 3px solid #4caf50 !important; /* Grön ram för färdiga maskiner */
+                box-shadow: 0 0 15px rgba(76, 175, 80, 0.6) !important;
+            }
+            
+            .card.changeover-in-progress {
+                border: 3px solid #ff9800 !important; /* Gul ram för pågående maskiner */
+                box-shadow: 0 0 15px rgba(255, 152, 0, 0.6) !important;
+            }
+            
+            /* Standard vit ram för ej påbörjade maskiner (så de inte ändras) */
+            .changeover-active .production-overview .card:not(.changeover-complete):not(.changeover-in-progress) {
+                border: 3px solid #ffffff !important; 
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.4) !important;
+            }
+        `;
+        document.head.appendChild(changeover_border_styles);
+
+        // Uppdatera startChangeoverCopilotScenario-funktionen för att använda rätt klasser
+        function startChangeoverCopilotScenario() {
+            // Create dynamic changeover copilot button
+            const changeoverCopilotBtn = document.createElement('div');
+            changeoverCopilotBtn.className = 'dynamic-copilot-button changeover-copilot';
+            changeoverCopilotBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Changeover Coach';
+            
+            // Position it near the status bar on the RIGHT side
+            const statusBar = document.querySelector('.status-bar');
+            const rect = statusBar.getBoundingClientRect();
+            changeoverCopilotBtn.style.position = 'absolute';
+            changeoverCopilotBtn.style.top = `${rect.bottom + 10}px`;
+            changeoverCopilotBtn.style.right = `20px`; // Position on right side
+            changeoverCopilotBtn.style.zIndex = '1010'; // Ensure high z-index
+            
+            document.querySelector('.container').appendChild(changeoverCopilotBtn);
+            
+            // Highlight current product in status bar to indicate changeover mode
+            statusBar.classList.add('changeover-mode');
+            
+            // Create and activate the overlay blur effect
+            const changeoverOverlay = document.createElement('div');
+            changeoverOverlay.className = 'changeover-overlay';
+            document.body.appendChild(changeoverOverlay);
+            
+            // Apply focus effect to production overview section
+            const productionOverview = document.querySelector('.production-overview');
+            productionOverview.classList.add('changeover-focus');
+            
+            // Add class to body to manage global blur state
+            document.body.classList.add('changeover-active');
+            
+            // Create spotlight effect to better highlight the machines
+            const spotlight = document.createElement('div');
+            spotlight.className = 'machine-spotlight';
+            document.body.appendChild(spotlight);
+            
+            // Apply changeover status to machines
+            const filler = document.getElementById('filler');
+            const depalletizer = document.getElementById('depalletizer');
+            const palletizer = document.getElementById('palletizer');
+            const shrinkpacker = document.getElementById('shrinkpacker');
+            const trayPacker = document.querySelectorAll('.card')[2]; // Third card should be tray packer
+            
+            // Ändra statuserna - ENDAST Filler ska vara grön (klar)
+            filler.classList.add('changeover-complete');
+            
+            // Dessa ska vara gula (pågående)
+            depalletizer.classList.add('changeover-in-progress');
+            trayPacker.classList.add('changeover-in-progress');
+            shrinkpacker.classList.add('changeover-in-progress');
+            
+            // Palletizer ska vara i normalläge (ej påbörjad)
+            // Vi lägger inte till någon klass till palletizer
+            
+            // Uppdatera status icon färger (optional)
+            filler.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+            depalletizer.querySelector('.status-icon').style.color = '#ff9800'; // Gul/orange
+            trayPacker.querySelector('.status-icon').style.color = '#ff9800'; // Gul/orange
+            shrinkpacker.querySelector('.status-icon').style.color = '#ff9800'; // Gul/orange
+            
+            // Update machine info text
+            filler.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+            depalletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            trayPacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            shrinkpacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Not Started';
+            
+            // Update second paragraph to show the order they're changing over to
+            filler.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            depalletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            trayPacker.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            shrinkpacker.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            palletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            
+            // Add click event to open changeover assistant
+            changeoverCopilotBtn.addEventListener('click', function() {
+                openChangeoverAssistant();
+            });
+            
+            // Auto-open the assistant after 2 seconds
+            setTimeout(() => {
+                openChangeoverAssistant();
+            }, 2000);
+        }
+
+        // Lägg till detta CSS för att säkerställa att chatten alltid är synlig under changeover
+        const chatVisibilityStyle = document.createElement('style');
+        chatVisibilityStyle.textContent = `
+            /* Säkerställ att chatten alltid är synlig och över allt annat */
+            #chatContainer {
+                z-index: 2000 !important; /* Högre z-index än allt annat */
+                position: fixed !important; /* Absolut positionering på skärmen */
+                filter: none !important;
+                pointer-events: all !important;
+                box-shadow: 0 0 30px rgba(76, 175, 80, 0.8) !important; /* Tydligare glow runt chatten */
+            }
+            
+            /* Förbättra synligheten för chattheadern */
+            .chat-header {
+                background-color: #4caf50 !important;
+                color: white !important;
+            }
+        `;
+        document.head.appendChild(chatVisibilityStyle);
+
+        // Uppdatera openChangeoverAssistant-funktionen för att säkerställa att chatten är synlig
+        function openChangeoverAssistant() {
+            const chatContainer = document.getElementById("chatContainer");
+            const chatMessages = document.getElementById("chatMessages");
+            
+            // Rensa tidigare meddelanden
+            chatMessages.innerHTML = '';
+            
+            // Säkerställ att chatten är synlig och har rätt stil
+            chatContainer.style.display = "flex";
+            chatContainer.style.zIndex = "2000"; // Högre z-index än allt annat
+            
+            // Lägg till introduktionsmeddelande
+            const introMessage = document.createElement("div");
+            introMessage.className = "system-message";
+            introMessage.innerHTML = `
+                <strong>Changeover Co-pilot Activated</strong>
+                <br><br>
+                <i class="fas fa-exchange-alt" style="font-size: 24px; color: #4caf50;"></i>
+                <br><br>
+                Welcome to Changeover mode! I'll help you ensure a smooth transition to the new product:
+                <br>
+                <strong>Pripps Blå CAN 4x6x0.5 3.5%</strong>
+                <br><br>
+                What would you like help with?
+                <br><br>
+                <button class="copilot-option" onclick="selectChangeoverOption('checklist')">Changeover Checklist</button>
+                
+                <button class="copilot-option" onclick="selectChangeoverOption('settings')">Operator Feedback</button>
+                <button class="copilot-option" onclick="selectChangeoverOption('history')">View Previous Run Issues</button>
+            `;
+            chatMessages.appendChild(introMessage);
+            scrollChatToBottom();
+        }
+
+        // Uppdatera startChangeoverCopilotScenario-funktionen för att implementera sekvensen av statusändringar
+        function startChangeoverCopilotScenario() {
+            // Skapa changeover co-pilot-knappen
+            const changeoverCopilotBtn = document.createElement('div');
+            changeoverCopilotBtn.className = 'dynamic-copilot-button changeover-copilot';
+            changeoverCopilotBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Changeover Coach';
+            
+            // Positionera knappen på HÖGER sida
+            const statusBar = document.querySelector('.status-bar');
+            const rect = statusBar.getBoundingClientRect();
+            changeoverCopilotBtn.style.position = 'absolute';
+            changeoverCopilotBtn.style.top = `${rect.bottom + 10}px`;
+            changeoverCopilotBtn.style.right = `20px`; // Positionera på höger sida
+            changeoverCopilotBtn.style.zIndex = '1010';
+            
+            document.querySelector('.container').appendChild(changeoverCopilotBtn);
+            
+            // Highlight current product in status bar to indicate changeover mode
+            statusBar.classList.add('changeover-mode');
+            
+            // Create and activate the overlay blur effect
+            const changeoverOverlay = document.createElement('div');
+            changeoverOverlay.className = 'changeover-overlay';
+            document.body.appendChild(changeoverOverlay);
+            
+            // Apply focus effect to production overview section
+            const productionOverview = document.querySelector('.production-overview');
+            productionOverview.classList.add('changeover-focus');
+            
+            // Add class to body to manage global blur state
+            document.body.classList.add('changeover-active');
+            
+            // Create spotlight effect to better highlight the machines
+            const spotlight = document.createElement('div');
+            spotlight.className = 'machine-spotlight';
+            document.body.appendChild(spotlight);
+            
+            // Get machine elements
+            const filler = document.getElementById('filler');
+            const depalletizer = document.getElementById('depalletizer');
+            const palletizer = document.getElementById('palletizer');
+            const shrinkpacker = document.getElementById('shrinkpacker');
+            const trayPacker = document.querySelectorAll('.card')[2]; // Third card should be tray packer
+            
+            // Initial state - Filler grön, övriga gula eller vita
+            filler.classList.add('changeover-complete');
+            depalletizer.classList.add('changeover-in-progress');
+            trayPacker.classList.add('changeover-in-progress');
+            shrinkpacker.classList.add('changeover-in-progress');
+            // Palletizer utan klass (ej påbörjad)
+            
+            // Uppdatera statusikoner
+            filler.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+            depalletizer.querySelector('.status-icon').style.color = '#ff9800'; // Gul
+            trayPacker.querySelector('.status-icon').style.color = '#ff9800'; // Gul
+            shrinkpacker.querySelector('.status-icon').style.color = '#ff9800'; // Gul
+            palletizer.querySelector('.status-icon').style.color = '#aaaaaa'; // Grå/neutral
+            
+            // Uppdatera statustexter
+            filler.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+            depalletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            trayPacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            shrinkpacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+            palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Not Started';
+            
+            // Update second paragraph to show the order they're changing over to
+            filler.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            depalletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            trayPacker.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            shrinkpacker.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            palletizer.querySelector('p:nth-of-type(2)').textContent = 'Pripps Blå CAN 4x6x0.5 3.5%';
+            
+            // Sekvens av statusändringar
+            // Efter 5 sekunder: Shrinkpacker och Tray Packer blir gröna
+            setTimeout(() => {
+                trayPacker.classList.remove('changeover-in-progress');
+                trayPacker.classList.add('changeover-complete');
+                trayPacker.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+                trayPacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+                
+                shrinkpacker.classList.remove('changeover-in-progress');
+                shrinkpacker.classList.add('changeover-complete');
+                shrinkpacker.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+                shrinkpacker.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+                
+                // Lägg till meddelande i chatten om framsteg
+                const progressMessage = document.createElement("div");
+                progressMessage.className = "system-message";
+                progressMessage.innerHTML = `
+                    <strong>Changeover Progress Update</strong>
+                    <br><br>
+                    ✅ Tray Packer changeover completed
+                    <br>
+                    ✅ Shrinkpacker changeover completed
+                    <br><br>
+                    <i class="fas fa-info-circle"></i> Depalletizer still in progress
+                `;
+                document.getElementById("chatMessages").appendChild(progressMessage);
+                scrollChatToBottom();
+            }, 7000);
+            
+            // Efter 7 sekunder: Depalletizer blir grön
+            setTimeout(() => {
+                depalletizer.classList.remove('changeover-in-progress');
+                depalletizer.classList.add('changeover-complete');
+                depalletizer.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+                depalletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+                
+                // Lägg till meddelande i chatten om framsteg
+                const progressMessage = document.createElement("div");
+                progressMessage.className = "system-message";
+                progressMessage.innerHTML = `
+                    <strong>Changeover Progress Update</strong>
+                    <br><br>
+                    ✅ Depalletizer changeover completed
+                    <br><br>
+                    <i class="fas fa-info-circle"></i> Palletizer changeover starting now
+                `;
+                document.getElementById("chatMessages").appendChild(progressMessage);
+                scrollChatToBottom();
+            }, 9000);
+            
+            // Efter 8 sekunder: Palletizer blir gul
+            setTimeout(() => {
+                palletizer.classList.add('changeover-in-progress');
+                palletizer.querySelector('.status-icon').style.color = '#ff9800'; // Gul
+                palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover In Progress';
+                
+                // Lägg till meddelande i chatten om framsteg
+                const progressMessage = document.createElement("div");
+                progressMessage.className = "system-message";
+                progressMessage.innerHTML = `
+                    <strong>Changeover Progress Update</strong>
+                    <br><br>
+                    <i class="fas fa-sync fa-spin"></i> Palletizer changeover in progress
+                    <br><br>
+                    Adjusting pallet pattern for new format...
+                `;
+                document.getElementById("chatMessages").appendChild(progressMessage);
+                scrollChatToBottom();
+            }, 11000);
+            
+            // Efter 12 sekunder: Palletizer blir grön, allt är klart
+            setTimeout(() => {
+                palletizer.classList.remove('changeover-in-progress');
+                palletizer.classList.add('changeover-complete');
+                palletizer.querySelector('.status-icon').style.color = '#4caf50'; // Grön
+                palletizer.querySelector('p:nth-of-type(1)').textContent = 'Changeover Complete';
+                
+                // Lägg till meddelande i chatten om framsteg
+                const progressMessage = document.createElement("div");
+                progressMessage.className = "system-message";
+                progressMessage.innerHTML = `
+                    <strong>✅ Changeover Complete!</strong>
+                    <br><br>
+                    All machines have successfully completed changeover to:
+                    <br>
+                    <strong>Pripps Blå CAN 4x6x0.5 3.5%</strong>
+                    <br><br>
+                    Ready to start production.
+                    <br><br>
+                    <button class="copilot-option" onclick="startProduction()">Start Full Production</button>
+                    <button class="copilot-option" onclick="verifyChecklist()">Review Changeover Checklist</button>
+                `;
+                document.getElementById("chatMessages").appendChild(progressMessage);
+                scrollChatToBottom();
+            }, 14000);
+            
+            // Add click event to open changeover assistant
+            changeoverCopilotBtn.addEventListener('click', function() {
+                openChangeoverAssistant();
+            });
+            
+            // Auto-open the assistant after 1 second
+            setTimeout(() => {
+                openChangeoverAssistant();
+            }, 1000);
+        }
+
+        function selectChangeoverOption(option) {
+            const chatMessages = document.getElementById("chatMessages");
+            
+            if (option === 'checklist') {
+                // Maximera chatfönstret först för att ge mer utrymme
+                const chatContainer = document.getElementById("chatContainer");
+                chatContainer.style.width = "700px";  // Öka bredden
+                chatContainer.style.height = "700px"; // Öka höjden
+
+                // Skapa ett system-meddelande som innehåller en iframe med större storlek
+                const checklistMessage = document.createElement("div");
+                checklistMessage.className = "system-message";
+                checklistMessage.style.padding = "10px";  // Minska padding för mer utrymme
+                checklistMessage.innerHTML = `
+                    <strong>Changeover Checklist</strong>
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 5px;">
+                        <button class="copilot-option" style="margin: 0;" onclick="openFullscreenChecklist()">
+                            <i class="fas fa-expand"></i> Expandera
+                        </button>
+                        <button class="copilot-option" style="margin: 0 0 0 5px;" onclick="closeChecklist()">
+                            <i class="fas fa-times"></i> Stäng
+                        </button>
+                    </div>
+                    <div class="iframe-container" style="width: 100%; height: 550px; overflow: hidden; border-radius: 8px; border: 1px solid #3a3f44;">
+                        <iframe src="file:///C:/Users/SEALBKEV/OneDrive - Carlsberg Group/Desktop/Omställning mockup/Index.html" 
+                                style="width: 100%; height: 100%; border: none;" 
+                                title="Changeover Checklist"></iframe>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(checklistMessage);
+                scrollChatToBottom();
+            } else if (option === 'troubleshoot') {
+                // Befintlig kod för troubleshoot
+                const troubleshootMessage = document.createElement("div");
+                troubleshootMessage.className = "system-message";
+                troubleshootMessage.innerHTML = `
+                    <strong>Startup Troubleshooting Guide</strong>
+                    <br><br>
+                    What specific issue are you experiencing during startup?
+                    <br><br>
+                    <button class="copilot-option" onclick="showTroubleshooting('filler')">Filler Issues</button>
+                    <button class="copilot-option" onclick="showTroubleshooting('depalletizer')">Depalletizer Issues</button>
+                    <button class="copilot-option" onclick="showTroubleshooting('packaging')">Packaging Issues</button>
+                    <button class="copilot-option" onclick="showTroubleshooting('conveyor')">Conveyor Issues</button>
+                `;
+                chatMessages.appendChild(troubleshootMessage);
+                scrollChatToBottom();
+            } else if (option === 'settings') {
+                // Uppdaterad kod för feedback - kapar textarea och submit-knappen, och kallar direkt på submitFeedback
+                submitFeedback();
+            } else if (option === 'history') {
+                // Befintlig kod för history
+                const historyMessage = document.createElement("div");
+                historyMessage.className = "system-message";
+                historyMessage.innerHTML = `
+                    <strong>Previous Run Issues</strong>
+                    <br><br>
+                    Last 3 production runs of Pripps Blå CAN 4x6x0.5 3.5%:
+                    <br><br>
+                    <div style="background-color: #1c252b; padding: 10px; border-radius: 4px;">
+                        <strong>Run #4582 (2025-03-21)</strong><br>
+                        • Filler pressure instability - Required adjustment after 2 hours<br>
+                        • Depalletizer had 1 stoppage (5 min) - Sensor issue
+                    </div>
+                    <br>
+                    <div style="background-color: #1c252b; padding: 10px; border-radius: 4px;">
+                        <strong>Run #4498 (2025-03-14)</strong><br>
+                        • No significant issues<br>
+                        • OEE: 78.6%
+                    </div>
+                    <br>
+                    <div style="background-color: #1c252b; padding: 10px; border-radius: 4px;">
+                        <strong>Run #4425 (2025-03-07)</strong><br>
+                        • Pallet pattern issue in first hour - Required manual adjustment<br>
+                        • Multiple micro-stops at filler - Resolved with clean
+                    </div>
+                `;
+                chatMessages.appendChild(historyMessage);
+                scrollChatToBottom();
+            }
+        }
+
+        // Lägg till funktion för att stänga checklistan och återställa chatten till normal storlek
+        function closeChecklist() {
+            const frameContainers = document.querySelectorAll('.iframe-container');
+            frameContainers.forEach(container => {
+                container.style.display = 'none';
+            });
+            
+            // Återställ chatfönstrets storlek
+            const chatContainer = document.getElementById("chatContainer");
+            chatContainer.style.width = "400px";
+            chatContainer.style.height = "500px";
+            
+            // Lägg till bekräftelsemeddelande
+            const chatMessages = document.getElementById("chatMessages");
+            const confirmMessage = document.createElement("div");
+            confirmMessage.className = "system-message";
+            confirmMessage.innerHTML = `
+                <strong>Checklista stängd</strong>
+                <br><br>
+                Vill du göra något annat med Changeover Co-pilot?
+            `;
+            chatMessages.appendChild(confirmMessage);
+            scrollChatToBottom();
+        }
+
+        // Lägg till funktion för att öppna checklistan i ett separat fönster/lager
+        function openFullscreenChecklist() {
+            // Skapa en fullskärmsmodal för checklistan
+            const modal = document.createElement('div');
+            modal.className = 'checklist-modal';
+            modal.innerHTML = `
+                <div class="checklist-modal-content">
+                    <div class="checklist-modal-header">
+                        <h2>Changeover Checklist</h2>
+                        <button onclick="closeFullscreenChecklist()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="checklist-modal-body">
+                        <iframe src="file:///C:/Users/SEALBKEV/OneDrive - Carlsberg Group/Desktop/Omställning mockup/Index.html" 
+                                style="width: 100%; height: 100%; border: none;" 
+                                title="Changeover Checklist"></iframe>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Lägg till funktion för att stänga fullskärmsmodalen
+        function closeFullscreenChecklist() {
+            const modals = document.querySelectorAll('.checklist-modal');
+            modals.forEach(modal => {
+                modal.remove();
+            });
+        }
+
+        // Lägg till CSS för modal-fönstret
+        const modalStyle = document.createElement('style');
+        modalStyle.textContent = `
+            .checklist-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                z-index: 2100;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s;
+            }
+            
+            .checklist-modal-content {
+                width: 90%;
+                height: 90%;
+                background-color: #1a1f24;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                box-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+            }
+            
+            .light-theme .checklist-modal-content {
+                background-color: #fff;
+                box-shadow: 0 0 30px rgba(76, 175, 80, 0.4);
+            }
+            
+            .checklist-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 20px;
+                background-color: #2b3239;
+                border-bottom: 1px solid #3a3f44;
+            }
+            
+            .light-theme .checklist-modal-header {
+                background-color: #4caf50;
+                color: white;
+                border-bottom: none;
+            }
+            
+            .checklist-modal-header h2 {
+                margin: 0;
+                font-size: 18px;
+            }
+            
+            .checklist-modal-header button {
+                background: none;
+                border: none;
+                font-size: 20px;
+                color: #b0b3b8;
+                cursor: pointer;
+            }
+            
+            .light-theme .checklist-modal-header button {
+                color: white;
+            }
+            
+            .checklist-modal-body {
+                flex: 1;
+                padding: 0;
+                overflow: hidden;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+
+        document.head.appendChild(modalStyle);
+
+        function submitFeedback() {
+            const feedbackText = document.getElementById('feedbackText').value.trim();
+            const chatMessages = document.getElementById("chatMessages");
+            
+            if (feedbackText === '') {
+                alert('Please enter your feedback before submitting.');
+                return;
+            }
+            
+            const thanksMessage = document.createElement("div");
+            thanksMessage.className = "system-message";
+            thanksMessage.innerHTML = `
+                <strong>Thank you for your feedback!</strong>
+                <br><br>
+                Your feedback has been recorded and will be used to improve future changeovers.
+                <br><br>
+                <strong>What went well:</strong>
+                <ul>
+                    <li>Filler changeover completed 12 minutes faster than average</li>
+                    <li>No pressure adjustments needed during startup</li>
+                </ul>
+                <br>
+                <strong>Areas for improvement:</strong>
+                <ul>
+                    <li>Palletizer changeover took longer than expected</li>
+                    <li>Additional operator training may be beneficial</li>
+                </ul>
+                <br>
+                Your specific comments have been shared with the production improvement team.
+            `;
+            
+            chatMessages.appendChild(thanksMessage);
+            
+            // Clear the textarea
+            document.getElementById('feedbackText').value = '';
+            
+            scrollChatToBottom();
+        }
+
+        function submitFeedback() {
+            const chatMessages = document.getElementById("chatMessages");
+            
+            // Create a prompt message asking for feedback
+            const promptMessage = document.createElement("div");
+            promptMessage.className = "system-message";
+            promptMessage.innerHTML = `
+                <strong>Operator Feedback</strong>
+                <br><br>
+                Please use the chat to provide your feedback about the changeover process.
+                <br><br>
+                What went well and what could be improved during this changeover?
+            `;
+            
+            chatMessages.appendChild(promptMessage);
+            
+            // Set up a temporary event listener for the next message
+            const chatInput = document.getElementById("chatInput");
+            const sendButton = chatInput.nextElementSibling;
+            
+            // Store the original sendMessage function
+            const originalSendMessage = window.sendMessage;
+            
+            // Override the sendMessage function temporarily
+            window.sendMessage = function() {
+                const userFeedback = chatInput.value.trim();
+                
+                if (userFeedback !== "") {
+                    // Show the user's message
+                    const messageDiv = document.createElement("div");
+                    messageDiv.textContent = userFeedback;
+                    chatMessages.appendChild(messageDiv);
+                    chatInput.value = "";
+                    
+                    // Create thank you response with feedback summary
+                    const thanksMessage = document.createElement("div");
+                    thanksMessage.className = "system-message";
+                    thanksMessage.innerHTML = `
+                        <strong>Thank you for your feedback!</strong>
+                        <br><br>
+                        Your feedback has been recorded and will be used to improve future changeovers.
+                        <br><br>
+                        <strong>What went well:</strong>
+                        <ul>
+                            <li>Filler changeover completed 12 minutes faster than average</li>
+                            <li>No pressure adjustments needed during startup</li>
+                        </ul>
+                        <br>
+                        <strong>Areas for improvement:</strong>
+                        <ul>
+                            <li>Palletizer changeover took longer than expected</li>
+                            <li>Additional operator training may be beneficial</li>
+                        </ul>
+                        <br>
+                        Your specific comments have been shared with the production improvement team.
+                    `;
+                    
+                    chatMessages.appendChild(thanksMessage);
+                    
+                    // Restore original sendMessage function
+                    window.sendMessage = originalSendMessage;
+                }
+                
+                scrollChatToBottom();
+            };
+            
+            scrollChatToBottom();
+        }
     </script>
 </body>
 </html>
