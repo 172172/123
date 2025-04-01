@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omställningschecklista</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <div class="logo-container">
+                <h1>L65 Omställningschecklista</h1>
+            </div>
+            <div class="header-controls">
+                <!-- Språkväljare -->
+                <div class="language-switcher">
+                    <button id="lang-sv" class="lang-btn active" title="Svenska"><span>SV</span></button>
+                    <button id="lang-en" class="lang-btn" title="English"><span>EN</span></button>
+                </div>
+                <!-- Admin-knapp visas när inloggad -->
+                <button id="admin-btn" class="admin-btn" style="display: none;"><i class="fas fa-cog"></i></button>
+                <button class="theme-toggle"><i class="fas fa-moon"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Admin-panel (dold tills man klickar på admin-knappen) -->
+        <div id="admin-panel" class="admin-panel" style="display: none;">
+            <div class="admin-header">
+                <h2>Administratörsläge</h2>
+                <button id="close-admin" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="admin-controls">
+                <button id="reorder-machines" class="admin-action-btn"><i class="fas fa-sort"></i> Ändra maskinordning</button>
+                <button id="add-machine" class="admin-action-btn"><i class="fas fa-plus"></i> Lägg till maskin</button>
+                <button id="edit-selected" class="admin-action-btn"><i class="fas fa-edit"></i> Redigera vald maskin</button>
+                <button id="delete-selected" class="admin-action-btn danger"><i class="fas fa-trash"></i> Ta bort vald maskin</button>
+                <button id="add-task" class="admin-action-btn" disabled><i class="fas fa-plus-circle"></i> Lägg till uppgift</button>
+                <button id="import-export" class="admin-action-btn"><i class="fas fa-exchange-alt"></i> Importera/Exportera data</button>
+                <button id="admin-logout" class="admin-action-btn danger"><i class="fas fa-sign-out-alt"></i> Logga ut</button>
+            </div>
+        </div>
+
+        <div id="machine-list" class="card-grid">
+            <!-- Maskinerna genereras här dynamiskt -->
+        </div>
+
+        <div id="machine-details" class="detail-view" style="display: none;">
+            <div class="detail-header">
+                <h2 id="machine-name"></h2>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                    <span id="progress-text">0% klar</span>
+                </div>
+            </div>
+            <div id="task-list" class="task-container">
+                <!-- Uppgifterna genereras här dynamiskt -->
+            </div>
+            <div class="action-buttons">
+                <button id="back-to-list" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Tillbaka</button>
+                <button id="mark-all-complete" class="btn btn-success"><i class="fas fa-check-double"></i> Markera alla som klara</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <p>&copy; 2025 Carlsberg Sverige</p>
+        </div>
+    </footer>
+    
+    <script src="script.js"></script>
+</body>
+</html>
