@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
             id: 1,
             name: 'Depalleteraren',
             description: 'Avlastare för tomma burkar/flaskor',
-            submachines: [7, 29, 21] // Referenser till Depall, Hiss och Banor
+            submachines: [29, 21] // Referenser till Depall, Hiss och Banor
         },
         {
             id: 2,
