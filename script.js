@@ -124,18 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ]
         },
         {
-            id: 7,
-            name: 'Depall',
-            description: 'Avlastare för tomma burkar/flaskor',
-            tasks: [
-                { id: 701, title: 'Justera gripdon', description: 'Anpassa gripdonen för aktuell förpackningstyp', completed: false },
-                { id: 702, title: 'Kontrollera lyftmekanism', description: 'Säkerställ att lyftmekanismen fungerar korrekt', completed: false },
-                { id: 703, title: 'Kalibrera sensorer', description: 'Justera sensorerna för korrekt pallettsregistrering', completed: false },
-                { id: 704, title: 'Rengöra glidytor', description: 'Rengör alla glidytor för smidig drift', completed: false },
-                { id: 705, title: 'Kontrollera lufttryck', description: 'Verifiera att lufttrycket är korrekt inställt', completed: false }
-            ]
-        },
-        {
+          
             id: 8,
             name: 'Pallastaren',
             description: 'Staplare för färdiga produkter på pall',
