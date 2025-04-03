@@ -959,6 +959,63 @@ body.light-theme {
 .light-theme .handover-btn:hover {
     background-color: #e0e0e0;
 }
+
+/* Lägg till dessa stilar i <style>-taggen */
+.ipad-friendly-button {
+    padding: 15px 20px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 120px;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+}
+
+.ipad-close-button {
+    padding: 12px 20px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 100px;
+    touch-action: manipulation;
+    -webkit-appearance: none;
+}
+
+/* Förbättra modal för touch-enheter */
+.checklist-modal-content {
+    width: 95% !important; /* Bredare för mobila enheter */
+    height: 90% !important;
+}
+
+/* iPad-specifika justeringar */
+@media (max-width: 1024px) {
+    .checklist-modal-header button {
+        font-size: 18px;
+        padding: 15px 25px;
+    }
+    
+    .ipad-friendly-button, 
+    .ipad-close-button {
+        min-width: 130px;
+        padding: 18px 25px;
+    }
+}
     </style>
     <!-- Add Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
