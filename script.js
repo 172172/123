@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Maskiner för omställning
+    // Lösningen är att deklarera mainMachines och machines i samma scope
+    // Och definiera machines INNAN mainMachines används i funktionerna
+
+    // VIKTIGT: Flytta machines-deklarationen före alla funktionsanrop
     const machines = [
         {
             id: 1,
@@ -144,6 +147,143 @@ document.addEventListener('DOMContentLoaded', function() {
                 { id: 805, title: 'Byta sträckfilm', description: 'Installera ny sträckfilm om nödvändigt', completed: false },
                 { id: 806, title: 'Rengöra sensorer', description: 'Rengör alla optiska sensorer och reflektorer', completed: false }
             ]
+        },
+        // Nya maskiner
+        {
+            id: 21,
+            name: 'Banor',
+            description: 'Transportbanor för Depalleteraren',
+            tasks: [
+                { id: 2101, title: 'Justera bandbredd', description: 'Ställ in rätt bredd för den aktuella förpackningstypen', completed: false },
+                { id: 2102, title: 'Kontrollera bandhastighet', description: 'Justera hastigheten för optimal produktion', completed: false },
+                { id: 2103, title: 'Smörja glidytor', description: 'Smörj alla glidytor för minskad friktion', completed: false },
+                { id: 2104, title: 'Kontrollera övergångar', description: 'Säkerställ att alla övergångar mellan band är jämna', completed: false },
+                { id: 2105, title: 'Rengöra spårning', description: 'Rengör och justera banornas spårningssystem', completed: false }
+            ]
+        },
+        {
+            id: 22,
+            name: 'Heuftar',
+            description: 'Hanterar flaskhanteringen i tappen',
+            tasks: [
+                { id: 2201, title: 'Justera gripdon', description: 'Anpassa gripdonen för aktuell flasktyp', completed: false },
+                { id: 2202, title: 'Kontrollera pneumatik', description: 'Säkerställ att pneumatiksystemet fungerar korrekt', completed: false },
+                { id: 2203, title: 'Kalibrera positionering', description: 'Kalibrera positioneringen för optimal hantering', completed: false },
+                { id: 2204, title: 'Rengöra komponenter', description: 'Rengör alla komponenter enligt hygienkrav', completed: false },
+                { id: 2205, title: 'Kontrollera slitage', description: 'Kontrollera slitage på kritiska delar', completed: false }
+            ]
+        },
+        {
+            id: 23,
+            name: 'Blåsen',
+            description: 'Rengör förpackningarna med tryckluft före fyllning',
+            tasks: [
+                { id: 2301, title: 'Kontrollera lufttryck', description: 'Verifiera att lufttrycket är korrekt inställt', completed: false },
+                { id: 2302, title: 'Rengöra munstycken', description: 'Rengör alla munstycken från smuts och partiklar', completed: false },
+                { id: 2303, title: 'Justera position', description: 'Justera munstyckenas position för aktuell förpackningstyp', completed: false },
+                { id: 2304, title: 'Kontrollera filter', description: 'Kontrollera och byt filter vid behov', completed: false },
+                { id: 2305, title: 'Testa funktion', description: 'Testa att blåsfunktionen fungerar korrekt på alla stationer', completed: false }
+            ]
+        },
+        {
+            id: 24,
+            name: 'Banor',
+            description: 'Transportbanor för Packmaskinerna',
+            tasks: [
+                { id: 2401, title: 'Justera bandbredd', description: 'Ställ in rätt bredd för den aktuella förpackningstypen', completed: false },
+                { id: 2402, title: 'Kontrollera bandhastighet', description: 'Justera hastigheten för optimal produktion', completed: false },
+                { id: 2403, title: 'Smörja glidytor', description: 'Smörj alla glidytor för minskad friktion', completed: false },
+                { id: 2404, title: 'Kontrollera övergångar', description: 'Säkerställ att alla övergångar mellan band är jämna', completed: false },
+                { id: 2405, title: 'Rengöra spårning', description: 'Rengör och justera banornas spårningssystem', completed: false }
+            ]
+        },
+        {
+            id: 25,
+            name: 'Handtagsapplikator',
+            description: 'Applicerar handtag på förpackningar',
+            tasks: [
+                { id: 2501, title: 'Ladda handtagsmaterial', description: 'Fyll på med rätt typ av handtagsmaterial', completed: false },
+                { id: 2502, title: 'Justera applikatorposition', description: 'Ställ in rätt position för handtagsapplicering', completed: false },
+                { id: 2503, title: 'Kontrollera limtemperatur', description: 'Säkerställ att limmet har rätt temperatur', completed: false },
+                { id: 2504, title: 'Kalibrera sensorer', description: 'Kalibrera sensorerna för korrekt förpackningsdetektering', completed: false },
+                { id: 2505, title: 'Testa funktion', description: 'Testa applikatorn med några förpackningar', completed: false }
+            ]
+        },
+        {
+            id: 26,
+            name: 'Divider',
+            description: 'Separerar och riktar förpackningar',
+            tasks: [
+                { id: 2601, title: 'Justera avstånd', description: 'Ställ in korrekt avstånd mellan guideskenor', completed: false },
+                { id: 2602, title: 'Kontrollera delningsfunktion', description: 'Säkerställ att förpackningarna delas korrekt', completed: false },
+                { id: 2603, title: 'Smörja mekanismer', description: 'Smörj rörliga delar för optimal funktion', completed: false },
+                { id: 2604, title: 'Rengöra guideytor', description: 'Rengör alla guideytor från smuts och skräp', completed: false },
+                { id: 2605, title: 'Kalibrera hastighet', description: 'Ställ in hastigheten för optimal produktion', completed: false }
+            ]
+        },
+        {
+            id: 27,
+            name: 'Banor',
+            description: 'Transportbanor för Pallastaren',
+            tasks: [
+                { id: 2701, title: 'Justera bandbredd', description: 'Ställ in rätt bredd för den aktuella förpackningstypen', completed: false },
+                { id: 2702, title: 'Kontrollera bandhastighet', description: 'Justera hastigheten för optimal produktion', completed: false },
+                { id: 2703, title: 'Smörja glidytor', description: 'Smörj alla glidytor för minskad friktion', completed: false },
+                { id: 2704, title: 'Kontrollera övergångar', description: 'Säkerställ att alla övergångar mellan band är jämna', completed: false },
+                { id: 2705, title: 'Rengöra spårning', description: 'Rengör och justera banornas spårningssystem', completed: false }
+            ]
+        },
+        {
+            id: 28,
+            name: 'Pallastare 1/2',
+            description: 'Staplar förpackningar på pallar',
+            tasks: [
+                { id: 2801, title: 'Justera pallmönster', description: 'Ställ in rätt pallmönster enligt specifikation', completed: false },
+                { id: 2802, title: 'Kontrollera gripdon', description: 'Säkerställ att gripdonen fungerar korrekt', completed: false },
+                { id: 2803, title: 'Kalibrera sensorer', description: 'Justera sensorer för korrekt förpackningsdetektering', completed: false },
+                { id: 2804, title: 'Kontrollera pallinmatning', description: 'Säkerställ att nya pallar matas in korrekt', completed: false },
+                { id: 2805, title: 'Rengöra grippytor', description: 'Rengör alla grippytor för optimal funktion', completed: false }
+            ]
+        },
+        {
+            id: 29,
+            name: 'Hiss',
+            description: 'Hissmekanismen för Depalleteraren',
+            tasks: [
+                { id: 2901, title: 'Kontrollera lyftmekanism', description: 'Säkerställ att lyftmekanismen fungerar korrekt', completed: false },
+                { id: 2902, title: 'Justera lyfthöjd', description: 'Kalibrera lyfthöjden för optimal funktion', completed: false },
+                { id: 2903, title: 'Smörja kedjetransmission', description: 'Smörj kedjor och kugghjul', completed: false },
+                { id: 2904, title: 'Kontrollera säkerhetsspärrar', description: 'Verifiera att alla säkerhetsspärrar fungerar', completed: false },
+                { id: 2905, title: 'Rengöra guideskenor', description: 'Rengör alla guideskenor från smuts och skräp', completed: false }
+            ]
+        }
+    ];
+
+    // Nu kan mainMachines använda machines-arrayen
+    const mainMachines = [
+        {
+            id: 1,
+            name: 'Depalleteraren',
+            description: 'Avlastare för tomma burkar/flaskor',
+            submachines: [7, 29, 21] // Referenser till Depall, Hiss och Banor
+        },
+        {
+            id: 2,
+            name: 'Tappen',
+            description: 'Fyllning och förslutning av burkar/flaskor',
+            submachines: [1, 2, 3, 22, 23] // Referenser till Tapp, Fals, Banor, Heuftar och Blåsen
+        },
+        {
+            id: 3,
+            name: 'Packmaskinerna',
+            description: 'Paketeringsmaskiner för färdiga produkter',
+            submachines: [4, 5, 6, 24, 25, 26] // Referenser till Kister, OCME, Jones, Banor, Handtagsapplikator och Divider
+        },
+        {
+            id: 4,
+            name: 'Pallastaren',
+            description: 'Staplare för färdiga produkter på pall',
+            submachines: [8, 28, 27] // Referenser till Pallastaren, Pallastare 1/2 och Banor
         }
     ];
 
@@ -156,6 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const markAllCompleteButton = document.getElementById('mark-all-complete');
     
     let currentMachine = null;
+    let currentMainMachine = null;
 
     // Ladda sparad status från localStorage
     const savedTasks = JSON.parse(localStorage.getItem('taskStatus')) || {};
@@ -175,20 +316,30 @@ document.addEventListener('DOMContentLoaded', function() {
         themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
     }
 
-    // Rendera maskinlistan
-    function renderMachineList() {
+    // Rendera huvudmaskinlistan
+    function renderMainMachineList() {
         machineList.innerHTML = '';
-        machines.forEach(machine => {
-            const completedTasks = machine.tasks.filter(task => task.completed).length;
-            const totalTasks = machine.tasks.length;
+        mainMachines.forEach(mainMachine => {
+            // Beräkna total framsteg för alla undermaskiner
+            let totalTasks = 0;
+            let completedTasks = 0;
+            
+            mainMachine.submachines.forEach(submachineId => {
+                const submachine = machines.find(m => m.id === submachineId);
+                if (submachine) {
+                    totalTasks += submachine.tasks.length;
+                    completedTasks += submachine.tasks.filter(task => task.completed).length;
+                }
+            });
+            
             const progressPercentage = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
             
             const card = document.createElement('div');
             card.className = 'machine-card';
-            card.dataset.id = machine.id;
+            card.dataset.id = mainMachine.id;
             
             let statusLabel = '';
-            let statusClass = ''; // Lägg till CSS-klass för statusetiketten
+            let statusClass = ''; 
             
             if (progressPercentage === 100) {
                 statusLabel = 'Klar';
@@ -202,8 +353,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             card.innerHTML = `
-                <h3>${machine.name}</h3>
-                <p>${machine.description}</p>
+                <h3>${mainMachine.name}</h3>
+                <p>${mainMachine.description}</p>
                 <div class="progress-indicator">
                     <div class="progress-value" style="width: ${progressPercentage}%"></div>
                 </div>
@@ -213,20 +364,89 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            card.addEventListener('click', () => showMachineDetails(machine));
+            card.addEventListener('click', () => showSubmachineList(mainMachine));
             machineList.appendChild(card);
         });
     }
 
-    // Visa detaljer för en maskin
-    function showMachineDetails(machine) {
-        currentMachine = machine;
-        machineNameElement.textContent = machine.name;
-        renderTaskList();
-        updateProgressBar();
+    // Visa lista med undermaskiner
+    function showSubmachineList(mainMachine) {
+        currentMainMachine = mainMachine;
+        machineNameElement.textContent = mainMachine.name;
         
+        // Skapa och visa lista med undermaskiner
+        taskList.innerHTML = '';
+        
+        // Lägg till loggning för debugging
+        console.log("Visar submaskiner för:", mainMachine.name);
+        console.log("Submaskiner IDs:", mainMachine.submachines);
+        
+        // *** VIKTIG FIX HÄR: Loopa igenom submachines och hitta motsvarande i machines-arrayen ***
+        if (mainMachine.submachines && mainMachine.submachines.length > 0) {
+            mainMachine.submachines.forEach(submachineId => {
+                const submachine = machines.find(m => m.id === submachineId);
+                if (submachine) {
+                    // Resten av koden för att rendera submachines...
+                    const completedTasks = submachine.tasks.filter(task => task.completed).length;
+                    const totalTasks = submachine.tasks.length;
+                    const progressPercentage = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                    
+                    const submachineElement = document.createElement('div');
+                    submachineElement.className = 'submachine-item';
+                    
+                    // Bestäm status-klass och text baserat på progress
+                    let statusClass = '';
+                    let statusLabel = '';
+                    
+                    if (progressPercentage === 100) {
+                        statusClass = 'status-complete';
+                        statusLabel = 'Klar';
+                    } else if (progressPercentage > 0) {
+                        statusClass = 'status-progress';
+                        statusLabel = 'Pågående';
+                    } else {
+                        statusClass = 'status-not-started';
+                        statusLabel = 'Ej påbörjad';
+                    }
+                    
+                    submachineElement.innerHTML = `
+                        <div class="submachine-content">
+                            <div class="submachine-header">
+                                <div class="submachine-title">${submachine.name}</div>
+                            </div>
+                            <div class="submachine-description">${submachine.description}</div>
+                            <div class="progress-indicator small">
+                                <div class="progress-value ${statusClass}" style="width: ${progressPercentage}%"></div>
+                            </div>
+                            <div class="card-footer">
+                                <span class="task-count">${completedTasks} av ${totalTasks} uppgifter klara</span>
+                                <span class="status-label ${statusClass}">${statusLabel}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    submachineElement.addEventListener('click', () => showMachineDetails(submachine));
+                    taskList.appendChild(submachineElement);
+                } else {
+                    console.error(`Kunde inte hitta maskin med ID: ${submachineId}`);
+                }
+            });
+        } else {
+            // Visa ett meddelande om det inte finns några undermaskiner
+            taskList.innerHTML = '<p class="no-submachines">Inga undermaskiner hittades för denna maskin.</p>';
+            console.error("Inga submachines för:", mainMachine.name);
+        }
+        
+        // Uppdatera UI för undermaskinsläge
         machineList.style.display = 'none';
         machineDetails.style.display = 'block';
+        document.getElementById('progress-bar').parentElement.style.display = 'block';
+        
+        // Ändra tillbaka-knappens text
+        backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Tillbaka till huvudmaskiner';
+        
+        // Dölj "Markera alla som klara" knappen i detta läge
+        markAllCompleteButton.style.display = 'none';
         
         // Animera in detaljer
         machineDetails.style.opacity = 0;
@@ -237,7 +457,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 10);
     }
 
-    // Uppdatera renderTaskList-funktionen
+    // Visa detaljer för en specifik maskin
+    function showMachineDetails(machine) {
+        currentMachine = machine;
+        machineNameElement.textContent = machine.name;
+        renderTaskList();
+        updateProgressBar();
+        
+        document.getElementById('machine-tasks-container').style.display = 'block';
+        document.getElementById('progress-container').style.display = 'block';
+        
+        // Ändra tillbaka-knappens text baserat på om vi kom från huvudmaskinlistan eller en undermaskinlista
+        backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Tillbaka till ' + currentMainMachine.name;
+        
+        // Visa "Markera alla som klara" knappen i detta läge
+        markAllCompleteButton.style.display = 'block';
+    }
+
+    // Händelselyssnare för tillbaka-knappen - modifierad för att hantera hierarkin
+    backButton.addEventListener('click', () => {
+        if (currentMachine) {
+            // Gå tillbaka till undermaskinlistan
+            currentMachine = null;
+            showSubmachineList(currentMainMachine);
+        } else if (currentMainMachine) {
+            // Gå tillbaka till huvudmaskinlistan
+            currentMainMachine = null;
+            machineDetails.style.display = 'none';
+            machineList.style.display = 'grid';
+        }
+    });
+
+    // Rendera tasklistan
     function renderTaskList() {
         taskList.innerHTML = '';
         currentMachine.tasks.forEach(task => {
@@ -264,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskElement.classList.toggle('completed', checkbox.checked);
                 updateProgressBar();
                 saveTaskStatus();
-                renderMachineList(); // Uppdatera även maskinlistan
+                renderMainMachineList(); // Uppdatera även huvudmaskinlistan
             });
             
             // Lägg till eventlyssnare för info-knappen om den finns
@@ -372,12 +623,6 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('taskStatus', JSON.stringify(taskStatus));
     }
 
-    // Händelselyssnare för tillbaka-knappen
-    backButton.addEventListener('click', () => {
-        machineDetails.style.display = 'none';
-        machineList.style.display = 'grid';
-    });
-    
     // Byt tema (mörkt/ljust)
     themeToggle.addEventListener('click', () => {
         document.body.classList.toggle('dark-theme');
@@ -394,11 +639,11 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTaskList();
         updateProgressBar();
         saveTaskStatus();
-        renderMachineList();
+        renderMainMachineList();
     });
 
     // Initiera app
-    renderMachineList();
+    renderMainMachineList();
 
     // Administration functionality
     let adminMode = false;
@@ -484,7 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.removeItem('adminMode');
         
         // Uppdatera UI för normal visning
-        renderMachineList();
+        renderMainMachineList();
         showNotification('Utloggad från administratörsläge');
     });
     
@@ -500,12 +745,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (document.body.classList.contains('admin-active')) {
             // Återrendera listan med drag-handtag
-            renderMachineList(true);
+            renderMainMachineList(true);
             adminPanel.style.display = 'none'; // Dölj admin-panelen
             initDragAndDrop();
             showNotification('Dra maskinerna för att ändra ordning');
         } else {
-            renderMachineList();
+            renderMainMachineList();
             showNotification('Ny ordning sparad');
         }
     });
@@ -656,7 +901,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Uppdatera UI och spara
-                renderMachineList();
+                renderMainMachineList();
                 saveMachineData();
                 selectedMachine = null;
                 addTaskBtn.disabled = true;
@@ -750,7 +995,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Uppdatera UI och spara
-            renderMachineList();
+            renderMainMachineList();
             saveMachineData();
             
             // Stäng formuläret
@@ -860,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderTaskList();
                 updateProgressBar();
             }
-            renderMachineList();
+            renderMainMachineList();
             saveMachineData();
             
             // Stäng formuläret
@@ -922,7 +1167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     machines.splice(0, machines.length, ...importedData);
                     
                     // Uppdatera UI och spara
-                    renderMachineList();
+                    renderMainMachineList();
                     saveMachineData();
                     
                     showNotification('Data importerad framgångsrikt', 'success');
@@ -970,25 +1215,54 @@ document.addEventListener('DOMContentLoaded', function() {
         if (savedData) {
             const parsedData = JSON.parse(savedData);
             if (Array.isArray(parsedData) && parsedData.length > 0) {
-                machines.splice(0, machines.length, ...parsedData);
+                // Kontrollera om parsedData innehåller de nya maskinerna
+                // Om inte, behåll de ursprungliga maskinerna (21-29) också
+                const highestId = Math.max(...parsedData.map(m => m.id));
+                
+                // Om de högre ID:na inte finns i sparad data, behåll dem
+                if (highestId < 20) {
+                    // Filtrera machines-array för att bara få id 1-20
+                    const originalMachines = machines.filter(m => m.id <= 20);
+                    // Filtrera för att få de nya maskinerna 21-29
+                    const newMachines = machines.filter(m => m.id > 20);
+                    // Kombinera sparad data med nya maskiner
+                    machines.splice(0, machines.length, ...parsedData, ...newMachines);
+                } else {
+                    // Annars använd bara sparad data
+                    machines.splice(0, machines.length, ...parsedData);
+                }
             }
         }
+        
+        // Spara aktuell data för att säkerställa att alla maskiner finns
+        // efter att laddningen är klar
+        saveMachineData();
     }
     
     // Anropa för att ladda maskiner när sidan laddas
     loadMachineData();
     
-    // Uppdatera renderMachineList för att hantera admin-läge
-    function renderMachineList(adminReorder = false) {
+    // Uppdatera renderMainMachineList för att hantera admin-läge
+    function renderMainMachineList(adminReorder = false) {
         machineList.innerHTML = '';
-        machines.forEach(machine => {
-            const completedTasks = machine.tasks.filter(task => task.completed).length;
-            const totalTasks = machine.tasks.length;
+        mainMachines.forEach(mainMachine => {
+            // Beräkna total framsteg för alla undermaskiner
+            let totalTasks = 0;
+            let completedTasks = 0;
+            
+            mainMachine.submachines.forEach(submachineId => {
+                const submachine = machines.find(m => m.id === submachineId);
+                if (submachine) {
+                    totalTasks += submachine.tasks.length;
+                    completedTasks += submachine.tasks.filter(task => task.completed).length;
+                }
+            });
+            
             const progressPercentage = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
             
             const card = document.createElement('div');
             card.className = 'machine-card';
-            card.dataset.id = machine.id;
+            card.dataset.id = mainMachine.id;
             
             let statusLabel = '';
             let statusClass = '';
@@ -1008,8 +1282,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             card.innerHTML = `
                 ${dragHandle}
-                <h3>${machine.name}</h3>
-                <p>${machine.description}</p>
+                <h3>${mainMachine.name}</h3>
+                <p>${mainMachine.description}</p>
                 <div class="progress-indicator">
                     <div class="progress-value" style="width: ${progressPercentage}%"></div>
                 </div>
@@ -1020,7 +1294,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             
             if (!adminReorder) {
-                card.addEventListener('click', () => showMachineDetails(machine));
+                card.addEventListener('click', () => showSubmachineList(mainMachine));
             }
             
             machineList.appendChild(card);
@@ -1062,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 taskElement.classList.toggle('completed', checkbox.checked);
                 updateProgressBar();
                 saveTaskStatus();
-                renderMachineList(); // Uppdatera även maskinlistan
+                renderMainMachineList(); // Uppdatera även huvudmaskinlistan
             });
             
             // Lägg till eventlyssnare för info-knappen om den finns
@@ -1096,7 +1370,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 renderTaskList();
                                 updateProgressBar();
                                 saveMachineData();
-                                renderMachineList();
+                                renderMainMachineList();
                                 showNotification('Uppgift borttagen', 'success');
                             }
                         }
@@ -1201,11 +1475,53 @@ document.addEventListener('DOMContentLoaded', function() {
         .dark-theme .add-task-item {
             border-top-color: #444;
         }
+
+        .submachine-item {
+            display: flex;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .submachine-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .submachine-content {
+            flex: 1;
+        }
+
+        .submachine-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .submachine-description {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .progress-indicator.small {
+            height: 6px;
+            margin-bottom: 5px;
+        }
+
+        .task-count {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
     `;
     document.head.appendChild(style);
     
     // Initialisera appen
-    renderMachineList();
+    renderMainMachineList();
     
     // Language switching functionality
     const langSwedish = document.getElementById('lang-sv');
