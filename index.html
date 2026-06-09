@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="sv">
 <head>
   <meta charset="UTF-8" />
@@ -254,10 +254,47 @@
     .add-v:hover { background: rgba(255,255,255,0.05); color: var(--text); }
     .pos-inf { font-family: monospace; font-size: 10px; background: rgba(0,0,0,0.24); padding: 4px 9px; border-radius: 7px; color: var(--muted); }
 
-    @media (max-width: 880px) {
-      .det-layout { grid-template-columns: 1fr; }
+    /* ─── MOBILE PANEL HANDLE ─── */
+    .panel-handle { display: none; }
+
+    @media (max-width: 1024px) {
+      /* Overview: hide sidebar, stage fills screen */
       .ov-sb { display: none; }
+      .ov-layout { padding: 8px; }
+
+      /* Start page: single column */
       .machine-grid { grid-template-columns: 1fr; }
+
+      /* Detail: stage fills full area, no sidebar in grid */
+      .det-layout { grid-template-columns: 1fr; grid-template-rows: 1fr; padding: 8px 8px 0 8px; gap: 0; }
+
+      /* Detail sidebar becomes a bottom-sheet panel */
+      .det-sb {
+        position: fixed; bottom: 0; left: 0; right: 0;
+        max-height: 65vh; border-radius: 18px 18px 0 0;
+        border-bottom: 0; z-index: 200;
+        transform: translateY(105%);
+        transition: transform 0.32s cubic-bezier(.2,.8,.2,1);
+      }
+      .det-sb.panel-open { transform: translateY(0); }
+
+      /* Panel drag handle */
+      .panel-handle {
+        display: flex; justify-content: center; align-items: center;
+        padding: 10px 0 6px; cursor: pointer; flex-shrink: 0;
+      }
+      .panel-handle-bar {
+        width: 38px; height: 4px;
+        background: rgba(255,255,255,0.18); border-radius: 2px;
+      }
+
+      /* Bigger touch targets */
+      .hotspot { width: 40px; height: 40px; font-size: 14px; }
+      .zone-circle { width: 56px; height: 56px; font-size: 18px; }
+      .hs-label { font-size: 12px; padding: 5px 11px; }
+
+      /* Header buttons slightly bigger */
+      .btn.sm { padding: 8px 14px; font-size: 12px; }
     }
   </style>
 </head>
@@ -323,11 +360,17 @@
         <img id="detImg" src="./maskin.jpg" alt="Zonbild" draggable="false" />
       </div>
     </div>
-    <div class="det-sb">
+    <div class="det-sb" id="detPanel">
+      <div class="panel-handle" onclick="closeMobilePanel()">
+        <div class="panel-handle-bar"></div>
+      </div>
       <div class="det-sb-scroll" id="detSbScroll"></div>
     </div>
   </div>
 </div>
+
+<!-- Mobile backdrop -->
+<div id="mobBackdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.45)" onclick="closeMobilePanel()"></div>
 
 <script>
 // ═══════════════════════════════════════
@@ -457,6 +500,8 @@ function flyToZoneById(zid) {
 
 function goOverview() {
   detIsEdit = false;
+  detSelHsId = null;
+  closeMobilePanel();
   renderOv();
   showView('v-overview');
 }
@@ -505,8 +550,9 @@ function renderOv() {
     b.innerHTML  =
       '<div class="zone-circle">' + z.id + '</div>' +
       '<div class="zone-pill">' + esc(z.title) + '</div>';
-    b.addEventListener('mousedown', ovDotDown);
-    b.addEventListener('click',     ovDotClick);
+    b.addEventListener('mousedown',  ovDotDown);
+    b.addEventListener('touchstart', ovDotDown, { passive: false });
+    b.addEventListener('click',      ovDotClick);
     st.appendChild(b);
   });
 
@@ -596,10 +642,12 @@ function ovStartAdd() {
 function ovDotDown(e) {
   if (!ovIsEdit) return;
   e.stopPropagation();
+  if (e.cancelable) e.preventDefault();
+  var p    = e.touches ? e.touches[0] : e;
   var zid  = parseInt(e.currentTarget.dataset.zid);
   ovSelZId = zid;
   var z    = getMach(curMachId).zones.find(function(x){ return x.id === zid; });
-  ovDrag   = { id: zid, startL: z.left, startT: z.top, startMX: e.clientX, startMY: e.clientY, moved: false, rect: document.getElementById('ovStage').getBoundingClientRect() };
+  ovDrag   = { id: zid, startL: z.left, startT: z.top, startMX: p.clientX, startMY: p.clientY, moved: false, rect: document.getElementById('ovStage').getBoundingClientRect() };
   renderOv();
 }
 function ovDotClick(e) {
@@ -668,8 +716,9 @@ function renderDetStage() {
     if (hs.done) b.classList.add('done');
     if (!detIsEdit && hs.id === detSelHsId) b.classList.add('active');
     if ( detIsEdit && hs.id === detSelHsId) b.classList.add('edit-sel');
-    b.addEventListener('mousedown', detDotDown);
-    b.addEventListener('click',     detDotClick);
+    b.addEventListener('mousedown',  detDotDown);
+    b.addEventListener('touchstart', detDotDown, { passive: false });
+    b.addEventListener('click',      detDotClick);
     st.appendChild(b);
     var lbl = document.createElement('div');
     lbl.className = 'hs-label'; lbl.dataset.hlid = hs.id;
@@ -687,9 +736,11 @@ function renderDetSb() {
     scroll.innerHTML = '<div class="empty-st"><div class="ico">&#128205;</div><div>' +
       (detIsEdit ? 'Klicka pa en hotspot for att redigera' : 'Klicka pa en hotspot for att se information') +
       '</div></div>';
+    syncMobilePanel(false);
     return;
   }
   if (detIsEdit) { renderDetEditHTML(hs); } else { renderDetViewHTML(hs); }
+  syncMobilePanel(true);
 }
 
 function renderDetViewHTML(hs) {
@@ -818,20 +869,32 @@ function detStartAdd() {
 }
 function detDotDown(e) {
   if (!detIsEdit) return; e.stopPropagation();
+  if (e.cancelable) e.preventDefault();
+  var p   = e.touches ? e.touches[0] : e;
   var hid = parseInt(e.currentTarget.dataset.hid);
   detSelHsId = hid;
   var z = getZone(), hs = (z.hotspots||[]).find(function(h){ return h.id===hid; });
-  detDrag = { id: hid, startL: hs.left, startT: hs.top, startMX: e.clientX, startMY: e.clientY, moved: false, rect: document.getElementById('detStage').getBoundingClientRect() };
+  detDrag = { id: hid, startL: hs.left, startT: hs.top, startMX: p.clientX, startMY: p.clientY, moved: false, rect: document.getElementById('detStage').getBoundingClientRect() };
   renderDetStage(); renderDetSb();
 }
 function detDotClick(e) {
   if (detDidDrag) { detDidDrag = false; return; }
-  detSelHsId = parseInt(e.currentTarget.dataset.hid);
+  var hid = parseInt(e.currentTarget.dataset.hid);
+  // toggle off if already selected (on desktop); on mobile just open panel
+  if (hid === detSelHsId && window.innerWidth > 1024) { detSelHsId = null; }
+  else { detSelHsId = hid; }
   renderDetStage(); renderDetSb();
 }
 document.getElementById('detStage').addEventListener('click', function(e) {
   if (detDidDrag) { detDidDrag = false; return; }
-  if (!detIsEdit || !detIsAdding) return;
+  if (!detIsEdit && !detIsAdding) {
+    // tap on stage background deselects and closes panel
+    if (e.target.closest && !e.target.closest('.hotspot')) {
+      detSelHsId = null; syncMobilePanel(false); renderDetStage(); renderDetSb();
+    }
+    return;
+  }
+  if (!detIsAdding) return;
   if (e.target.closest && e.target.closest('.hotspot')) return;
   var r = this.getBoundingClientRect();
   var lp = clamp((e.clientX-r.left)/r.width*100,1,99);
@@ -847,11 +910,11 @@ document.getElementById('detStage').addEventListener('click', function(e) {
 });
 
 // ═══════════════════════════════════════
-// SHARED MOUSE EVENTS
+// SHARED POINTER EVENTS (mouse + touch)
 // ═══════════════════════════════════════
-document.addEventListener('mousemove', function(e) {
+function handleDragMove(clientX, clientY) {
   if (ovDrag) {
-    var dx = e.clientX - ovDrag.startMX, dy = e.clientY - ovDrag.startMY;
+    var dx = clientX - ovDrag.startMX, dy = clientY - ovDrag.startMY;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) ovDrag.moved = true;
     if (!ovDrag.moved) return;
     var z = getMach(curMachId).zones.find(function(x){ return x.id === ovDrag.id; });
@@ -866,7 +929,7 @@ document.addEventListener('mousemove', function(e) {
     if (eT) eT.textContent = z.top.toFixed(1)  + '%';
   }
   if (detDrag) {
-    var dx2 = e.clientX - detDrag.startMX, dy2 = e.clientY - detDrag.startMY;
+    var dx2 = clientX - detDrag.startMX, dy2 = clientY - detDrag.startMY;
     if (Math.abs(dx2) > 3 || Math.abs(dy2) > 3) detDrag.moved = true;
     if (!detDrag.moved) return;
     var zone = getZone(); if (!zone) return;
@@ -883,12 +946,19 @@ document.addEventListener('mousemove', function(e) {
     if (eL2) eL2.textContent = hs.left.toFixed(1) + '%';
     if (eT2) eT2.textContent = hs.top.toFixed(1)  + '%';
   }
-});
-
-document.addEventListener('mouseup', function() {
+}
+function handleDragEnd() {
   if (ovDrag)  { if (ovDrag.moved)  { ovDidDrag  = true; saveAll(); } ovDrag  = null; }
   if (detDrag) { if (detDrag.moved) { detDidDrag = true; saveAll(); } detDrag = null; }
-});
+}
+document.addEventListener('mousemove', function(e) { handleDragMove(e.clientX, e.clientY); });
+document.addEventListener('touchmove', function(e) {
+  if (!ovDrag && !detDrag) return;
+  e.preventDefault();
+  handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: false });
+document.addEventListener('mouseup',  handleDragEnd);
+document.addEventListener('touchend', handleDragEnd);
 
 // ═══════════════════════════════════════
 // UTILS
@@ -898,6 +968,31 @@ function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ═══════════════════════════════════════
+// MOBILE PANEL
+// ═══════════════════════════════════════
+function syncMobilePanel(open) {
+  if (window.innerWidth > 1024) return;
+  var panel = document.getElementById('detPanel');
+  var bd    = document.getElementById('mobBackdrop');
+  if (open) {
+    panel.classList.add('panel-open');
+    bd.style.display = 'block';
+  } else {
+    panel.classList.remove('panel-open');
+    bd.style.display = 'none';
+  }
+}
+function closeMobilePanel() {
+  detSelHsId = null;
+  var panel = document.getElementById('detPanel');
+  var bd    = document.getElementById('mobBackdrop');
+  if (panel) panel.classList.remove('panel-open');
+  if (bd)    bd.style.display = 'none';
+  renderDetStage();
+  renderDetSb();
 }
 
 // ═══════════════════════════════════════
