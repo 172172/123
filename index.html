@@ -256,6 +256,8 @@
 
     /* ─── MOBILE PANEL HANDLE ─── */
     .panel-handle { display: none; }
+    /* ─── MOBILE EDIT BAR ─── */
+    .edit-bar { display: none; }
 
     @media (max-width: 1024px) {
       /* Overview: hide sidebar, stage fills screen */
@@ -265,8 +267,9 @@
       /* Start page: single column */
       .machine-grid { grid-template-columns: 1fr; }
 
-      /* Detail: stage fills full area, no sidebar in grid */
+      /* Detail: stage fills full area, leave room at bottom for bars */
       .det-layout { grid-template-columns: 1fr; grid-template-rows: 1fr; padding: 8px 8px 0 8px; gap: 0; }
+      .det-stage { margin-bottom: 64px; }
 
       /* Detail sidebar becomes a bottom-sheet panel */
       .det-sb {
@@ -288,10 +291,22 @@
         background: rgba(255,255,255,0.18); border-radius: 2px;
       }
 
-      /* Bigger touch targets */
-      .hotspot { width: 40px; height: 40px; font-size: 14px; }
-      .zone-circle { width: 56px; height: 56px; font-size: 18px; }
-      .hs-label { font-size: 12px; padding: 5px 11px; }
+      /* Mobile edit bar — slim bar at bottom during edit mode */
+      .edit-bar {
+        display: flex; align-items: center; gap: 10px;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        padding: 10px 14px 14px;
+        background: var(--panel); border-top: 1px solid var(--border);
+        z-index: 200;
+        transform: translateY(100%);
+        transition: transform 0.25s cubic-bezier(.2,.8,.2,1);
+      }
+      .edit-bar.bar-open { transform: translateY(0); }
+
+      /* Hotspot/zone sizes — keep readable but not too large */
+      .hotspot { width: 34px; height: 34px; font-size: 13px; }
+      .zone-circle { width: 50px; height: 50px; font-size: 17px; }
+      .hs-label { font-size: 11px; padding: 4px 9px; }
 
       /* Header buttons slightly bigger */
       .btn.sm { padding: 8px 14px; font-size: 12px; }
@@ -371,6 +386,16 @@
 
 <!-- Mobile backdrop -->
 <div id="mobBackdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.45)" onclick="closeMobilePanel()"></div>
+
+<!-- Mobile edit bar (shown in edit mode instead of full panel) -->
+<div id="editBar" class="edit-bar">
+  <div style="flex:1;min-width:0">
+    <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Vald hotspot</div>
+    <div id="editBarName" style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">–</div>
+  </div>
+  <button class="btn sm" onclick="openMobileEditPanel()">Redigera detaljer</button>
+  <button class="btn sm" style="padding:8px 10px" onclick="closeEditBar()">✕</button>
+</div>
 
 <script>
 // ═══════════════════════════════════════
@@ -739,6 +764,9 @@ function renderDetSb() {
     syncMobilePanel(false);
     return;
   }
+  // update edit bar label
+  var ebn = document.getElementById('editBarName');
+  if (ebn) ebn.textContent = '#' + hs.id + ' ' + hs.title;
   if (detIsEdit) { renderDetEditHTML(hs); } else { renderDetViewHTML(hs); }
   syncMobilePanel(true);
 }
@@ -977,20 +1005,51 @@ function syncMobilePanel(open) {
   if (window.innerWidth > 1024) return;
   var panel = document.getElementById('detPanel');
   var bd    = document.getElementById('mobBackdrop');
-  if (open) {
-    panel.classList.add('panel-open');
-    bd.style.display = 'block';
-  } else {
+  var bar   = document.getElementById('editBar');
+  if (detIsEdit) {
+    // edit mode: show slim bar only — full panel opened manually
+    if (open) {
+      if (bar) bar.classList.add('bar-open');
+    } else {
+      if (bar) bar.classList.remove('bar-open');
+    }
+    // ensure full panel is closed
     panel.classList.remove('panel-open');
     bd.style.display = 'none';
+  } else {
+    // view mode: show full bottom sheet
+    if (bar) bar.classList.remove('bar-open');
+    if (open) {
+      panel.classList.add('panel-open');
+      bd.style.display = 'block';
+    } else {
+      panel.classList.remove('panel-open');
+      bd.style.display = 'none';
+    }
   }
+}
+function openMobileEditPanel() {
+  var panel = document.getElementById('detPanel');
+  var bd    = document.getElementById('mobBackdrop');
+  var bar   = document.getElementById('editBar');
+  if (panel) panel.classList.add('panel-open');
+  if (bd)    bd.style.display = 'block';
+  if (bar)   bar.classList.remove('bar-open');
+}
+function closeEditBar() {
+  detSelHsId = null;
+  var bar = document.getElementById('editBar');
+  if (bar) bar.classList.remove('bar-open');
+  renderDetStage(); renderDetSb();
 }
 function closeMobilePanel() {
   detSelHsId = null;
   var panel = document.getElementById('detPanel');
   var bd    = document.getElementById('mobBackdrop');
+  var bar   = document.getElementById('editBar');
   if (panel) panel.classList.remove('panel-open');
   if (bd)    bd.style.display = 'none';
+  if (bar)   bar.classList.remove('bar-open');
   renderDetStage();
   renderDetSb();
 }
