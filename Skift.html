@@ -1,0 +1,909 @@
+﻿<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maskin Hotspot Verktyg</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: rgba(10,16,28,0.96);
+      --border: rgba(255,255,255,0.10);
+      --text: #eef3ff;
+      --muted: rgba(238,243,255,0.60);
+      --accent: #ff4d4d;
+      --accent2: #7cf3c5;
+      --blue: #4a9eff;
+      --edit-c: #f0a832;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(ellipse 1400px 800px at 50% -10%, #1a2a45 0%, var(--bg) 60%, #04060c 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ─── VIEW SYSTEM ─── */
+    .view { position: fixed; inset: 0; display: flex; flex-direction: column; opacity: 0; pointer-events: none; transition: opacity 0.26s ease; }
+    .view.active { opacity: 1; pointer-events: all; }
+
+    /* ─── SHARED HEADER ─── */
+    .app-hdr {
+      padding: 9px 16px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.30);
+      flex-shrink: 0;
+    }
+    .breadcrumb { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .bc-cur { color: var(--text); font-weight: 600; }
+    .bc-sep { opacity: .35; }
+    .hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 999px; padding: 7px 15px;
+      font-weight: 600; cursor: pointer; color: var(--text);
+      background: rgba(255,255,255,0.07); font-size: 12px;
+      transition: background 0.14s; white-space: nowrap; font-family: inherit;
+    }
+    .btn:hover  { background: rgba(255,255,255,0.14); }
+    .btn.edit   { background: var(--edit-c); border-color: transparent; color: #1a0a00; }
+    .btn.edit:hover { background: #d4920a; }
+    .btn.green  { background: rgba(124,243,197,0.13); color: var(--accent2); border-color: rgba(124,243,197,0.26); }
+    .btn.green:hover { background: rgba(124,243,197,0.22); }
+    .btn.red    { background: rgba(255,77,77,0.11); color: var(--accent); border-color: rgba(255,77,77,0.26); }
+    .btn.red:hover { background: rgba(255,77,77,0.22); }
+    .btn.sm { padding: 5px 12px; font-size: 11px; }
+
+    /* ════════════════════════════════
+       START VIEW
+    ════════════════════════════════ */
+    #v-start { justify-content: center; align-items: center; }
+    .start-wrap { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 24px; width: 100%; max-width: 680px; }
+    .start-logo { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); opacity: .5; }
+    .start-title { font-size: 30px; font-weight: 800; text-align: center; }
+    .start-sub { font-size: 13px; color: var(--muted); text-align: center; }
+    .machine-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+    .mc-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 20px; padding: 26px 18px 20px;
+      cursor: pointer; text-align: left;
+      transition: background 0.16s, border-color 0.16s, transform 0.16s;
+      display: flex; flex-direction: column; gap: 8px;
+      position: relative; overflow: hidden; font-family: inherit; color: var(--text);
+    }
+    .mc-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.20); transform: translateY(-2px); }
+    .mc-card:active { transform: translateY(0); }
+    .mc-stripe { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 20px 0 0 20px; }
+    .mc-icon { font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+    .mc-name { font-size: 15px; font-weight: 700; }
+    .mc-sub  { font-size: 11px; color: var(--muted); }
+    .mc-arr  { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 20px; opacity: .22; }
+
+    /* ════════════════════════════════
+       OVERVIEW VIEW
+    ════════════════════════════════ */
+    #v-overview { transition: opacity 0.26s ease, transform 0.36s cubic-bezier(.35,0,.2,1); }
+    #v-overview.fly-out {
+      opacity: 0;
+      transform: scale(2.8);
+      transform-origin: var(--fly-x, 50%) var(--fly-y, 50%);
+      pointer-events: none;
+    }
+    .ov-layout { flex: 1; display: flex; min-height: 0; padding: 12px; gap: 12px; }
+    .ov-stage {
+      position: relative; flex: 1;
+      border-radius: 18px; overflow: hidden;
+      border: 1px solid var(--border); background: #0d1520;
+    }
+    .ov-stage.edit-mode { border-color: rgba(240,168,50,0.5); box-shadow: 0 0 0 2px rgba(240,168,50,0.15); }
+    .ov-stage.adding { cursor: crosshair !important; }
+    .ov-img { width: 100%; height: 100%; object-fit: contain; display: block; user-select: none; pointer-events: none; -webkit-user-drag: none; background: #0d1520; }
+    .ov-banner {
+      position: absolute; top: 0; left: 0; right: 0;
+      background: rgba(240,168,50,0.09); border-bottom: 1px solid rgba(240,168,50,0.28);
+      padding: 6px 12px; font-size: 11px; color: var(--edit-c); font-weight: 600;
+      z-index: 20; display: none; align-items: center; gap: 8px;
+    }
+    .ov-stage.edit-mode .ov-banner { display: flex; }
+    .pos-chip { margin-left: auto; font-size: 10px; font-family: monospace; background: rgba(0,0,0,0.28); padding: 2px 7px; border-radius: 5px; }
+
+    /* Zone markers */
+    .zone-dot-btn {
+      position: absolute; transform: translate(-50%,-50%);
+      cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;
+      z-index: 10; user-select: none; border: 0; background: transparent; padding: 0; font-family: inherit;
+    }
+    .zone-circle {
+      width: 50px; height: 50px; border-radius: 50%;
+      background: rgba(74,158,255,0.90);
+      border: 2.5px solid rgba(255,255,255,0.28);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 800; color: #fff;
+      animation: zpulse 2.6s infinite;
+      transition: transform 0.14s, background 0.14s;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+    }
+    .zone-dot-btn:hover .zone-circle { transform: scale(1.07); background: rgba(74,158,255,1); }
+    .zone-circle::after { content: ''; position: absolute; inset: -9px; border-radius: 50%; border: 1.5px solid rgba(74,158,255,0.38); pointer-events: none; }
+    .zone-pill {
+      background: rgba(6,10,20,0.88); border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 600;
+      color: #fff; white-space: nowrap; backdrop-filter: blur(6px); pointer-events: none;
+      max-width: 150px; overflow: hidden; text-overflow: ellipsis;
+    }
+    @keyframes zpulse {
+      0%   { box-shadow: 0 0 0 0    rgba(74,158,255,0.52); }
+      70%  { box-shadow: 0 0 0 16px rgba(74,158,255,0);    }
+      100% { box-shadow: 0 0 0 0    rgba(74,158,255,0);    }
+    }
+    .edit-mode .zone-dot-btn { cursor: grab; }
+    .edit-mode .zone-dot-btn .zone-circle { animation: none; }
+    .edit-mode .zone-dot-btn.z-sel .zone-circle { background: var(--edit-c); box-shadow: 0 0 0 8px rgba(240,168,50,0.16); }
+
+    /* Overview sidebar */
+    .ov-sb { width: 250px; flex-shrink: 0; border-radius: 18px; border: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+    .ov-sb-scroll { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 7px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.09) transparent; }
+    .zone-li {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 11px; border-radius: 11px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer; transition: background 0.13s;
+      font-family: inherit; color: var(--text); text-align: left; width: 100%;
+    }
+    .zone-li:hover { background: rgba(255,255,255,0.09); }
+    .zone-num { width: 28px; height: 28px; border-radius: 50%; background: rgba(74,158,255,0.82); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0; }
+    .zone-li-info { flex: 1; min-width: 0; }
+    .zone-li-title { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .zone-li-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .zone-chevron { opacity: .30; font-size: 14px; flex-shrink: 0; }
+
+    /* ════════════════════════════════
+       DETAIL VIEW
+    ════════════════════════════════ */
+    .det-layout { display: grid; grid-template-columns: minmax(0,1fr) 375px; gap: 12px; padding: 12px; flex: 1; min-height: 0; }
+    .det-stage {
+      position: relative; border-radius: 18px; overflow: hidden;
+      border: 1px solid var(--border); background: #0d1520;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+    }
+    .det-stage.edit-mode { border-color: rgba(240,168,50,0.5); box-shadow: 0 0 0 2px rgba(240,168,50,0.15); }
+    .det-stage.adding { cursor: crosshair !important; }
+    .det-banner {
+      position: absolute; top: 0; left: 0; right: 0;
+      background: rgba(240,168,50,0.09); border-bottom: 1px solid rgba(240,168,50,0.28);
+      padding: 6px 12px; font-size: 11px; color: var(--edit-c); font-weight: 600;
+      z-index: 20; display: none; align-items: center; gap: 8px;
+    }
+    .det-stage.edit-mode .det-banner { display: flex; }
+    .det-img-wrap { position: absolute; inset: 0; }
+    .det-img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; background: #0d1520; user-select: none; pointer-events: none; -webkit-user-drag: none; }
+
+    /* Hotspots */
+    .hotspot {
+      position: absolute; transform: translate(-50%,-50%);
+      width: 30px; height: 30px; border: 0; border-radius: 50%;
+      background: rgba(255,77,77,0.95); color: #fff;
+      font-weight: 700; font-size: 12px; cursor: pointer;
+      display: grid; place-items: center; animation: pulse 2.5s infinite;
+      z-index: 10; transition: background 0.17s; user-select: none;
+    }
+    .hotspot::after { content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1.5px solid rgba(255,77,77,0.42); pointer-events: none; }
+    .hotspot.active { background: rgba(124,243,197,0.98); color: #062016; animation: none; box-shadow: 0 0 0 9px rgba(124,243,197,0.11); }
+    .hotspot.active::after { border-color: rgba(124,243,197,0.62); }
+    .det-stage.edit-mode .hotspot { cursor: grab; animation: none; }
+    .det-stage.edit-mode .hotspot.edit-sel { background: var(--edit-c); color: #1a0a00; box-shadow: 0 0 0 8px rgba(240,168,50,0.16); animation: none; }
+    .det-stage.edit-mode .hotspot.edit-sel::after { border-color: rgba(240,168,50,0.62); }
+    .hotspot.done { background: rgba(34,197,94,0.92); animation: none; }
+    .hotspot.done::after { border-color: rgba(34,197,94,0.45); }
+    .hotspot.done.active { background: rgba(34,197,94,0.98); color: #fff; box-shadow: 0 0 0 9px rgba(34,197,94,0.13); }
+    .hotspot.done.active::after { border-color: rgba(34,197,94,0.65); }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0    rgba(255,77,77,0.50); }
+      70%  { box-shadow: 0 0 0 12px rgba(255,77,77,0);    }
+      100% { box-shadow: 0 0 0 0    rgba(255,77,77,0);    }
+    }
+    .hs-label {
+      position: absolute; transform: translateY(-50%); margin-left: 20px;
+      padding: 4px 9px; border-radius: 999px;
+      background: rgba(6,10,20,0.82); border: 1px solid rgba(255,255,255,0.11);
+      color: #fff; font-size: 11px; white-space: nowrap;
+      pointer-events: none; backdrop-filter: blur(6px); z-index: 9;
+    }
+
+    /* Detail sidebar */
+    .det-sb { border-radius: 18px; border: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+    .det-sb-scroll { flex: 1; overflow-y: auto; padding: 11px; display: flex; flex-direction: column; gap: 9px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.09) transparent; }
+    .card { padding: 12px; border-radius: 13px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); }
+    .card-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+    .hs-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .lbl-chip { margin-left: auto; font-size: 10px; color: var(--muted); background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 5px; }
+
+    /* Zoom */
+    .zoom-view { width: 100%; aspect-ratio: 4/3; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); background: #0d1520; position: relative; margin-top: 4px; }
+    .zoom-crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid rgba(124,243,197,0.95); background: transparent; pointer-events: none; box-shadow: 0 0 0 1.5px rgba(0,0,0,0.55), 0 0 10px rgba(124,243,197,0.24); }
+    .zoom-crosshair::before { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 44px; height: 2px; background: rgba(124,243,197,0.9); box-shadow: 0 0 0 0.5px rgba(0,0,0,0.5); }
+    .zoom-crosshair::after  { content: ''; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 2px; height: 44px; background: rgba(124,243,197,0.9); box-shadow: 0 0 0 0.5px rgba(0,0,0,0.5); }
+
+    /* Values */
+    .values-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px,1fr)); gap: 7px; }
+    .val-card { padding: 9px 11px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.07); }
+    .val-lbl { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+    .val-num  { font-size: 19px; font-weight: 700; color: var(--accent2); line-height: 1.1; }
+    .desc-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    /* Empty */
+    .empty-st { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: var(--muted); font-size: 12px; text-align: center; padding: 40px 14px; flex: 1; }
+    .empty-st .ico { font-size: 30px; opacity: .28; }
+
+    /* Edit form */
+    .fg { display: flex; flex-direction: column; gap: 4px; }
+    .fg label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .fc { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.11); border-radius: 9px; padding: 6px 10px; color: var(--text); font-size: 12px; font-family: inherit; width: 100%; transition: border-color 0.14s; }
+    .fc:focus { outline: none; border-color: rgba(240,168,50,0.58); }
+    textarea.fc { resize: vertical; min-height: 68px; }
+    .val-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 5px; align-items: center; }
+    .rm-v { border: 0; background: rgba(255,77,77,0.11); color: var(--accent); border-radius: 7px; width: 26px; height: 26px; cursor: pointer; font-size: 15px; display: grid; place-items: center; flex-shrink: 0; font-family: inherit; }
+    .rm-v:hover { background: rgba(255,77,77,0.24); }
+    .add-v { border: 1px dashed rgba(255,255,255,0.16); border-radius: 9px; padding: 6px; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; width: 100%; transition: all 0.13s; font-family: inherit; }
+    .add-v:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .pos-inf { font-family: monospace; font-size: 10px; background: rgba(0,0,0,0.24); padding: 4px 9px; border-radius: 7px; color: var(--muted); }
+
+    @media (max-width: 880px) {
+      .det-layout { grid-template-columns: 1fr; }
+      .ov-sb { display: none; }
+      .machine-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ START ══ -->
+<div class="view active" id="v-start">
+  <div class="start-wrap">
+    <div class="start-logo">Carlsberg Group</div>
+    <div>
+      <div class="start-title">Välj maskintyp</div>
+      <div class="start-sub" style="margin-top:6px">Välj vilken maskin du vill arbeta med</div>
+    </div>
+    <div class="machine-grid" id="mcGrid"></div>
+  </div>
+</div>
+
+<!-- ══ OVERVIEW ══ -->
+<div class="view" id="v-overview">
+  <div class="app-hdr">
+    <button class="btn sm" onclick="goStart()">← Start</button>
+    <div class="breadcrumb"><span class="bc-cur" id="ov-mname">–</span></div>
+    <div class="hdr-right">
+      <button class="btn green sm" id="ovAddBtn" style="display:none" onclick="ovStartAdd()">+ Lagg till zon</button>
+      <button class="btn sm" id="ovEditBtn" onclick="toggleOvEdit()">Redigera</button>
+    </div>
+  </div>
+  <div class="ov-layout">
+    <div class="ov-stage" id="ovStage">
+      <div class="ov-banner">
+        <span>Redigering — dra zoner for att flytta | klicka pa zon for att redigera</span>
+        <span class="pos-chip" id="ovPosChip">–</span>
+      </div>
+      <img class="ov-img" id="ovImg" src="./maskin.jpg" alt="Maskinoversikt" draggable="false" />
+    </div>
+    <div class="ov-sb">
+      <div class="ov-sb-scroll" id="ovSbScroll"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAIL ══ -->
+<div class="view" id="v-detail">
+  <div class="app-hdr">
+    <button class="btn sm" onclick="goOverview()">← Oversikt</button>
+    <div class="breadcrumb">
+      <span id="det-mname" style="color:var(--muted)">–</span>
+      <span class="bc-sep">›</span>
+      <span class="bc-cur" id="det-zname">–</span>
+    </div>
+    <div class="hdr-right">
+      <button class="btn green sm" id="detAddBtn" style="display:none" onclick="detStartAdd()">+ Lagg till hotspot</button>
+      <button class="btn sm" id="detEditBtn" onclick="toggleDetEdit()">Redigera</button>
+    </div>
+  </div>
+  <div class="det-layout">
+    <div class="det-stage" id="detStage">
+      <div class="det-banner">
+        <span>Redigering — dra hotspots for att flytta | klicka pa hotspot for att redigera</span>
+        <span class="pos-chip" id="detPosChip">–</span>
+      </div>
+      <div class="det-img-wrap">
+        <img id="detImg" src="./maskin.jpg" alt="Zonbild" draggable="false" />
+      </div>
+    </div>
+    <div class="det-sb">
+      <div class="det-sb-scroll" id="detSbScroll"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+var STORE = 'hs_app_v3';
+
+var MC_TYPES = [
+  { id: 'coolpack-sleek',    name: 'Coolpack Sleek',    icon: 'C-SLK', color: '#4a9eff', sub: 'Sleek-serien' },
+  { id: 'coolpack-standard', name: 'Coolpack Standard', icon: 'C-STD', color: '#2d7dd2', sub: 'Standard-serien' },
+  { id: 'suitcase-sleek',    name: 'Suitcase Sleek',    icon: 'S-SLK', color: '#7cf3c5', sub: 'Sleek-serien' },
+  { id: 'suitcase-standard', name: 'Suitcase Standard', icon: 'S-STD', color: '#3dbf91', sub: 'Standard-serien' }
+];
+
+function makeDefaultMachine() {
+  return {
+    overviewImg: './jones.png',
+    zones: [
+      {
+        id: 1, title: 'Vanster sektion', label: 'Z1',
+        left: 28, top: 55, zoneImg: './maskin.jpg',
+        hotspots: [
+          { id: 1, title: 'Justeringspunkt', label: '17C', left: 20, top: 58,
+            values: [{ label: 'Gap', value: '10 cm' }, { label: 'Slitage', value: '3 mm' }],
+            desc: 'Justera skruvarna pa vanster sida. Kontrollera att gapet haller sig inom tolerans.', zoomImg: '' },
+          { id: 2, title: 'Tryckpunkt', label: '17U', left: 55, top: 44,
+            values: [{ label: 'Tryck', value: '2.4 bar' }, { label: 'Temp', value: '68 C' }],
+            desc: 'Kontrollera tryck och temperatur. Byt tatning om lackage observeras.', zoomImg: '' },
+          { id: 3, title: 'Lagerpunkt', label: '19U', left: 78, top: 41,
+            values: [{ label: 'Diameter', value: '52 mm' }, { label: 'Forslitning', value: '1.2 mm' }],
+            desc: 'Mat forslitning pa lagret. Byt om forslitning overstiger 2 mm.', zoomImg: '' },
+          { id: 4, title: 'Bultpunkt', label: '18U', left: 62, top: 63,
+            values: [{ label: 'Avstand', value: '5 mm' }, { label: 'Moment', value: '35 Nm' }],
+            desc: 'Dra at bultarna till angivet moment. Kontrollera distansen mot ritning.', zoomImg: '' }
+        ]
+      },
+      {
+        id: 2, title: 'Hoger sektion', label: 'Z2',
+        left: 72, top: 42, zoneImg: '',
+        hotspots: []
+      }
+    ]
+  };
+}
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+var appData      = loadAll();
+var curMachId    = null;
+var curZoneId    = null;
+
+var ovIsEdit     = false;
+var ovIsAdding   = false;
+var ovSelZId     = null;
+var ovDrag       = null;
+var ovDidDrag    = false;
+
+var detIsEdit    = false;
+var detIsAdding  = false;
+var detSelHsId   = null;
+var detDrag      = null;
+var detDidDrag   = false;
+var detImgW      = 0;
+var detImgH      = 0;
+
+// ═══════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════
+function loadAll() {
+  try { var r = localStorage.getItem(STORE); if (r) return JSON.parse(r); } catch(e) {}
+  return {};
+}
+function getMach(id) {
+  if (!appData[id]) appData[id] = makeDefaultMachine();
+  return appData[id];
+}
+function saveAll() {
+  try { localStorage.setItem(STORE, JSON.stringify(appData)); } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// VIEW ROUTING
+// ═══════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function goStart() { ovIsEdit = false; showView('v-start'); }
+
+function selectMachine(id) {
+  curMachId   = id;
+  ovSelZId    = null;
+  ovIsEdit    = false;
+  ovIsAdding  = false;
+  renderOv();
+  showView('v-overview');
+}
+
+function flyToZone(zid, markerEl) {
+  var ovEl  = document.getElementById('v-overview');
+  var rect  = markerEl.getBoundingClientRect();
+  var vr    = ovEl.getBoundingClientRect();
+  ovEl.style.setProperty('--fly-x', ((rect.left + rect.width/2  - vr.left) / vr.width  * 100).toFixed(1) + '%');
+  ovEl.style.setProperty('--fly-y', ((rect.top  + rect.height/2 - vr.top)  / vr.height * 100).toFixed(1) + '%');
+  ovEl.classList.add('fly-out');
+  setTimeout(function() {
+    curZoneId   = zid;
+    detSelHsId  = null;
+    detIsEdit   = false;
+    detIsAdding = false;
+    renderDet();
+    showView('v-detail');
+    ovEl.classList.remove('fly-out');
+  }, 350);
+}
+
+function flyToZoneById(zid) {
+  var el = document.querySelector('.zone-dot-btn[data-zid="' + zid + '"]');
+  if (el) { flyToZone(zid, el); }
+  else {
+    curZoneId = zid; detSelHsId = null; detIsEdit = false;
+    renderDet(); showView('v-detail');
+  }
+}
+
+function goOverview() {
+  detIsEdit = false;
+  renderOv();
+  showView('v-overview');
+}
+
+// ═══════════════════════════════════════
+// START PAGE
+// ═══════════════════════════════════════
+function renderStart() {
+  var g = document.getElementById('mcGrid');
+  g.innerHTML = '';
+  MC_TYPES.forEach(function(m) {
+    var b = document.createElement('button');
+    b.className = 'mc-card';
+    b.innerHTML =
+      '<div class="mc-stripe" style="background:' + m.color + '"></div>' +
+      '<div class="mc-icon" style="color:' + m.color + '">' + m.icon + '</div>' +
+      '<div class="mc-name">' + esc(m.name) + '</div>' +
+      '<div class="mc-sub">' + esc(m.sub) + '</div>' +
+      '<div class="mc-arr">›</div>';
+    b.addEventListener('click', function(){ selectMachine(m.id); });
+    g.appendChild(b);
+  });
+}
+
+// ═══════════════════════════════════════
+// OVERVIEW
+// ═══════════════════════════════════════
+function renderOv() {
+  var mach = getMach(curMachId);
+  var mt   = MC_TYPES.find(function(m){ return m.id === curMachId; });
+  document.getElementById('ov-mname').textContent     = mt ? mt.name : curMachId;
+  document.getElementById('ovImg').src               = mach.overviewImg || './maskin.jpg';
+  document.getElementById('ovEditBtn').textContent   = ovIsEdit ? 'Klart' : 'Redigera';
+  document.getElementById('ovEditBtn').className     = ovIsEdit ? 'btn edit sm' : 'btn sm';
+  document.getElementById('ovAddBtn').style.display  = ovIsEdit ? 'inline-flex' : 'none';
+  var st = document.getElementById('ovStage');
+  st.className = 'ov-stage' + (ovIsEdit ? ' edit-mode' : '') + (ovIsAdding ? ' adding' : '');
+
+  st.querySelectorAll('.zone-dot-btn').forEach(function(e){ e.remove(); });
+  mach.zones.forEach(function(z) {
+    var b = document.createElement('button');
+    b.className = 'zone-dot-btn' + (ovIsEdit && ovSelZId === z.id ? ' z-sel' : '');
+    b.dataset.zid = z.id;
+    b.style.left = z.left + '%';
+    b.style.top  = z.top  + '%';
+    b.innerHTML  =
+      '<div class="zone-circle">' + z.id + '</div>' +
+      '<div class="zone-pill">' + esc(z.title) + '</div>';
+    b.addEventListener('mousedown', ovDotDown);
+    b.addEventListener('click',     ovDotClick);
+    st.appendChild(b);
+  });
+
+  renderOvSb();
+}
+
+function renderOvSb() {
+  var scroll = document.getElementById('ovSbScroll');
+  var mach   = getMach(curMachId);
+
+  if (ovIsEdit) {
+    var machFld =
+      '<div class="card" style="display:flex;flex-direction:column;gap:8px;margin-bottom:2px">' +
+        '<div style="font-size:11px;font-weight:700;color:var(--edit-c)">Maskininstallningar</div>' +
+        '<div class="fg"><label>Oversiktsbild (sokvag/URL)</label>' +
+          '<input class="fc" type="text" value="' + esc(mach.overviewImg) + '" placeholder="./maskin.jpg" oninput="ovSetMachImg(this.value)" /></div>' +
+      '</div>';
+
+    if (ovSelZId !== null) {
+      var z = mach.zones.find(function(x){ return x.id === ovSelZId; });
+      scroll.innerHTML = machFld + renderOvZoneEditHTML(z);
+    } else {
+      var zlist = mach.zones.map(function(z){
+        var cnt = (z.hotspots || []).length;
+        return '<button class="zone-li" onclick="ovSelZone(' + z.id + ')">' +
+          '<div class="zone-num">' + z.id + '</div>' +
+          '<div class="zone-li-info"><div class="zone-li-title">' + esc(z.title) + '</div>' +
+          '<div class="zone-li-sub">' + cnt + ' hotspot' + (cnt===1?'':'s') + '</div></div>' +
+          '<div class="zone-chevron">›</div></button>';
+      }).join('');
+      scroll.innerHTML = machFld + (zlist || '<div class="empty-st"><div class="ico">&#128205;</div><div>Inga zoner — klicka pa "Lagg till zon"</div></div>');
+    }
+    return;
+  }
+
+  var items = mach.zones.map(function(z){
+    var cnt = (z.hotspots || []).length;
+    return '<button class="zone-li" onclick="flyToZoneById(' + z.id + ')">' +
+      '<div class="zone-num">' + z.id + '</div>' +
+      '<div class="zone-li-info"><div class="zone-li-title">' + esc(z.title) + '</div>' +
+      '<div class="zone-li-sub">' + cnt + ' hotspot' + (cnt===1?'':'s') + '</div></div>' +
+      '<div class="zone-chevron">›</div></button>';
+  }).join('');
+  scroll.innerHTML = items || '<div class="empty-st"><div class="ico">&#128205;</div><div>Inga zoner</div></div>';
+}
+
+function renderOvZoneEditHTML(z) {
+  if (!z) return '<div class="empty-st"><div class="ico">&#9995;</div><div>Klicka pa en zon pa kartan for att redigera</div></div>';
+  return '<div class="card" style="display:flex;flex-direction:column;gap:8px">' +
+    '<div style="font-size:11px;font-weight:700;color:var(--edit-c)">Zon ' + z.id + '</div>' +
+    '<div class="fg"><label>Titel</label><input class="fc" type="text" value="' + esc(z.title) + '" oninput="ovZoneField(' + z.id + ',\'title\',this.value)" /></div>' +
+    '<div class="fg"><label>Etikett (pa kartan)</label><input class="fc" type="text" value="' + esc(z.label) + '" oninput="ovZoneField(' + z.id + ',\'label\',this.value)" /></div>' +
+    '<div class="fg"><label>Zonsbild (sokvag/URL, tomt = oversiktsbild)</label><input class="fc" type="text" value="' + esc(z.zoneImg) + '" placeholder="./zon_' + z.id + '.jpg" oninput="ovZoneField(' + z.id + ',\'zoneImg\',this.value)" /></div>' +
+    '<div class="fg"><label>Position (dra punkten pa kartan)</label><div class="pos-inf">Vanster: <strong id="ovEL">' + z.left.toFixed(1) + '%</strong> &nbsp; Topp: <strong id="ovET">' + z.top.toFixed(1) + '%</strong></div></div>' +
+  '</div>' +
+  '<div style="display:flex;gap:7px"><button class="btn red sm" onclick="deleteZone(' + z.id + ')">Ta bort zon</button></div>';
+}
+
+function ovSetMachImg(val) { var m = getMach(curMachId); m.overviewImg = val; saveAll(); document.getElementById('ovImg').src = val || './maskin.jpg'; }
+function ovSelZone(id) { ovSelZId = id; renderOv(); }
+function ovZoneField(zid, field, val) {
+  var z = getMach(curMachId).zones.find(function(x){ return x.id === zid; });
+  if (!z) return;
+  z[field] = val; saveAll();
+  if (field === 'title') {
+    var pill = document.querySelector('.zone-dot-btn[data-zid="' + zid + '"] .zone-pill');
+    if (pill) pill.textContent = val;
+    renderOvSb();
+  }
+}
+function deleteZone(zid) {
+  if (!confirm('Ta bort denna zon och alla dess hotspots?')) return;
+  var m = getMach(curMachId);
+  m.zones = m.zones.filter(function(z){ return z.id !== zid; });
+  ovSelZId = null; saveAll(); renderOv();
+}
+function toggleOvEdit() {
+  ovIsEdit = !ovIsEdit; ovIsAdding = false; ovSelZId = null; renderOv();
+}
+function ovStartAdd() {
+  ovIsAdding = true;
+  document.getElementById('ovStage').classList.add('adding');
+  document.getElementById('ovAddBtn').textContent = 'Klicka pa bilden...';
+}
+
+// Ov drag
+function ovDotDown(e) {
+  if (!ovIsEdit) return;
+  e.stopPropagation();
+  var zid  = parseInt(e.currentTarget.dataset.zid);
+  ovSelZId = zid;
+  var z    = getMach(curMachId).zones.find(function(x){ return x.id === zid; });
+  ovDrag   = { id: zid, startL: z.left, startT: z.top, startMX: e.clientX, startMY: e.clientY, moved: false, rect: document.getElementById('ovStage').getBoundingClientRect() };
+  renderOv();
+}
+function ovDotClick(e) {
+  if (ovDidDrag) { ovDidDrag = false; return; }
+  var zid = parseInt(e.currentTarget.dataset.zid);
+  if (ovIsEdit) { ovSelZId = zid; renderOv(); }
+  else { flyToZone(zid, e.currentTarget); }
+}
+document.getElementById('ovStage').addEventListener('click', function(e) {
+  if (ovDidDrag) { ovDidDrag = false; return; }
+  if (!ovIsEdit || !ovIsAdding) return;
+  if (e.target.closest && e.target.closest('.zone-dot-btn')) return;
+  var r    = this.getBoundingClientRect();
+  var lp   = clamp((e.clientX - r.left) / r.width  * 100, 1, 99);
+  var tp   = clamp((e.clientY - r.top)  / r.height * 100, 1, 99);
+  var mach = getMach(curMachId);
+  var nid  = mach.zones.length ? Math.max.apply(null, mach.zones.map(function(z){ return z.id; })) + 1 : 1;
+  mach.zones.push({ id: nid, title: 'Zon ' + nid, label: 'Z' + nid, left: parseFloat(lp.toFixed(1)), top: parseFloat(tp.toFixed(1)), zoneImg: '', hotspots: [] });
+  ovSelZId = nid; ovIsAdding = false;
+  document.getElementById('ovAddBtn').textContent = '+ Lagg till zon';
+  saveAll(); renderOv();
+});
+
+// ═══════════════════════════════════════
+// DETAIL
+// ═══════════════════════════════════════
+function getZone() { return getMach(curMachId).zones.find(function(z){ return z.id === curZoneId; }); }
+
+function renderDet() {
+  var mach = getMach(curMachId);
+  var z    = getZone();
+  if (!z) return;
+  var mt   = MC_TYPES.find(function(m){ return m.id === curMachId; });
+  document.getElementById('det-mname').textContent    = mt ? mt.name : curMachId;
+  document.getElementById('det-zname').textContent    = z.title;
+  document.getElementById('detEditBtn').textContent   = detIsEdit ? 'Klart' : 'Redigera';
+  document.getElementById('detEditBtn').className     = detIsEdit ? 'btn edit sm' : 'btn sm';
+  document.getElementById('detAddBtn').style.display  = detIsEdit ? 'inline-flex' : 'none';
+  document.getElementById('detStage').className       = 'det-stage' + (detIsEdit ? ' edit-mode' : '') + (detIsAdding ? ' adding' : '');
+
+  var di   = document.getElementById('detImg');
+  var src  = z.zoneImg || mach.overviewImg || './maskin.jpg';
+  if (di.dataset.ls !== src) {
+    di.dataset.ls = src; detImgW = 0; detImgH = 0;
+    di.onload = function() {
+      detImgW = this.naturalWidth; detImgH = this.naturalHeight;
+      if (detSelHsId !== null && !detIsEdit) renderDetSb();
+    };
+    di.src = src;
+  } else if (di.complete && di.naturalWidth) {
+    detImgW = di.naturalWidth; detImgH = di.naturalHeight;
+  }
+  renderDetStage(); renderDetSb();
+}
+
+function renderDetStage() {
+  var z  = getZone();
+  var st = document.getElementById('detStage');
+  st.querySelectorAll('.hotspot, .hs-label').forEach(function(e){ e.remove(); });
+  if (!z) return;
+  (z.hotspots || []).forEach(function(hs) {
+    var b = document.createElement('button');
+    b.className = 'hotspot'; b.dataset.hid = hs.id; b.textContent = hs.done ? '✓' : hs.id;
+    b.style.left = hs.left + '%'; b.style.top  = hs.top  + '%';
+    b.setAttribute('aria-label', hs.title);
+    if (hs.done) b.classList.add('done');
+    if (!detIsEdit && hs.id === detSelHsId) b.classList.add('active');
+    if ( detIsEdit && hs.id === detSelHsId) b.classList.add('edit-sel');
+    b.addEventListener('mousedown', detDotDown);
+    b.addEventListener('click',     detDotClick);
+    st.appendChild(b);
+    var lbl = document.createElement('div');
+    lbl.className = 'hs-label'; lbl.dataset.hlid = hs.id;
+    lbl.style.left = hs.left + '%'; lbl.style.top  = hs.top  + '%';
+    lbl.textContent = hs.label;
+    st.appendChild(lbl);
+  });
+}
+
+function renderDetSb() {
+  var scroll = document.getElementById('detSbScroll');
+  var z = getZone(); if (!z) return;
+  var hs = (z.hotspots || []).find(function(h){ return h.id === detSelHsId; });
+  if (!hs) {
+    scroll.innerHTML = '<div class="empty-st"><div class="ico">&#128205;</div><div>' +
+      (detIsEdit ? 'Klicka pa en hotspot for att redigera' : 'Klicka pa en hotspot for att se information') +
+      '</div></div>';
+    return;
+  }
+  if (detIsEdit) { renderDetEditHTML(hs); } else { renderDetViewHTML(hs); }
+}
+
+function renderDetViewHTML(hs) {
+  var sc = document.getElementById('detSbScroll');
+  var vh = '';
+  if (hs.values && hs.values.length) {
+    vh = '<div class="values-grid">' + hs.values.map(function(v){
+      return '<div class="val-card"><div class="val-lbl">' + esc(v.label) + '</div><div class="val-num">' + esc(v.value) + '</div></div>';
+    }).join('') + '</div>';
+  } else { vh = '<p style="font-size:12px;color:var(--muted)">Inga matvarder</p>'; }
+  var doneStyle = hs.done ? 'border-color:rgba(34,197,94,0.35);background:rgba(34,197,94,0.05)' : '';
+  var badgeStyle = hs.done ? 'background:rgba(34,197,94,0.9)' : '';
+  var btnStyle = hs.done
+    ? 'margin-top:10px;width:100%;padding:9px;border-radius:9px;border:1px solid rgba(34,197,94,0.5);background:rgba(34,197,94,0.13);color:rgba(34,197,94,1);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;'
+    : 'margin-top:10px;width:100%;padding:9px;border-radius:9px;border:1px dashed rgba(255,255,255,0.18);background:rgba(255,255,255,0.04);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;';
+  sc.innerHTML =
+    '<div class="card" style="' + doneStyle + '"><div class="card-title"><span class="hs-badge" style="' + badgeStyle + '">' + (hs.done ? '✓' : hs.id) + '</span><span>' + esc(hs.title) + '</span><span class="lbl-chip">' + esc(hs.label) + '</span></div>' +
+      '<div class="zoom-view" id="zoomView">' + zoomMarkup(hs) + '<div class="zoom-crosshair"></div></div>' +
+      '<button style="' + btnStyle + '" onclick="toggleHsDone(' + hs.id + ')">' + (hs.done ? '✓ Utförd — klicka för att avmarkera' : 'Markera som utförd') + '</button>' +
+    '</div>' +
+    '<div class="card"><div class="card-title" style="font-size:12px">Mätvärden</div>' + vh + '</div>' +
+    '<div class="card"><div class="card-title" style="font-size:12px">Åtgärd</div>' +
+      '<div class="desc-text">' + (hs.desc ? esc(hs.desc) : '<em style="opacity:.4">Ingen beskrivning</em>') + '</div></div>';
+  if (detImgW && detImgH) {
+    var zv = document.getElementById('zoomView');
+    if (zv) zv.style.aspectRatio = (detImgW / detImgH).toFixed(4);
+  }
+}
+
+function stageToImg(lp, tp) {
+  if (!detImgW || !detImgH) return { x: lp, y: tp };
+  var st = document.getElementById('detStage');
+  var sw = st.clientWidth, sh = st.clientHeight;
+  var iAR = detImgW / detImgH, sAR = sw / sh;
+  var rw, rh, ox, oy;
+  if (iAR > sAR) { rw = sw; rh = sw / iAR; ox = 0;          oy = (sh - rh) / 2; }
+  else           { rh = sh; rw = sh * iAR; ox = (sw - rw)/2; oy = 0;             }
+  return {
+    x: Math.max(0, Math.min(100, (lp/100*sw - ox) / rw * 100)),
+    y: Math.max(0, Math.min(100, (tp/100*sh - oy) / rh * 100))
+  };
+}
+function zoomMarkup(hs) {
+  if (hs.zoomImg) return '<img src="' + esc(hs.zoomImg) + '" style="width:100%;height:100%;object-fit:cover;" />';
+  var S = 3.5, c = stageToImg(hs.left, hs.top);
+  var tx = (50 - c.x).toFixed(2), ty = (50 - c.y).toFixed(2);
+  var z = getZone(), m = getMach(curMachId);
+  var src = (z && z.zoneImg) ? z.zoneImg : (m.overviewImg || './maskin.jpg');
+  return '<img src="' + esc(src) + '" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;transform-origin:' + c.x.toFixed(2) + '% ' + c.y.toFixed(2) + '%;transform:translate(' + tx + '%,' + ty + '%) scale(' + S + ');" />';
+}
+
+function renderDetEditHTML(hs) {
+  var vr = (hs.values || []).map(function(v, i){
+    return '<div class="val-row">' +
+      '<input class="fc" type="text" placeholder="Etikett" value="' + esc(v.label) + '" oninput="dSetV(' + hs.id + ',' + i + ',\'label\',this.value)" />' +
+      '<input class="fc" type="text" placeholder="Varde" value="' + esc(v.value) + '" oninput="dSetV(' + hs.id + ',' + i + ',\'value\',this.value)" />' +
+      '<button class="rm-v" onclick="dRmV(' + hs.id + ',' + i + ')">x</button></div>';
+  }).join('');
+  document.getElementById('detSbScroll').innerHTML =
+    '<div class="card" style="display:flex;flex-direction:column;gap:8px">' +
+      '<div style="font-size:11px;font-weight:700;color:var(--edit-c)">Hotspot #' + hs.id + '</div>' +
+      '<div class="fg"><label>Titel</label><input class="fc" type="text" value="' + esc(hs.title) + '" oninput="dSetF(' + hs.id + ',\'title\',this.value)" /></div>' +
+      '<div class="fg"><label>Etikett</label><input class="fc" type="text" value="' + esc(hs.label) + '" oninput="dSetF(' + hs.id + ',\'label\',this.value)" /></div>' +
+      '<div class="fg"><label>Position</label><div class="pos-inf">Vanster: <strong id="dEL">' + hs.left.toFixed(1) + '%</strong> &nbsp; Topp: <strong id="dET">' + hs.top.toFixed(1) + '%</strong></div></div>' +
+      '<div class="fg"><label>Inzoomad bild (tomt = autozoom)</label><input class="fc" type="text" value="' + esc(hs.zoomImg) + '" oninput="dSetF(' + hs.id + ',\'zoomImg\',this.value)" /></div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div style="font-size:11px;font-weight:700;margin-bottom:6px">Matvarden</div>' +
+      '<div style="display:flex;flex-direction:column;gap:5px">' + vr + '</div>' +
+      '<button class="add-v" style="margin-top:6px" onclick="dAddV(' + hs.id + ')">+ Lagg till matvarde</button>' +
+    '</div>' +
+    '<div class="card"><div class="fg"><label>Atgardsbeskrivning</label>' +
+      '<textarea class="fc" oninput="dSetF(' + hs.id + ',\'desc\',this.value)">' + esc(hs.desc) + '</textarea></div></div>' +
+    '<div style="display:flex;gap:7px"><button class="btn red sm" onclick="dDelHs(' + hs.id + ')">Ta bort hotspot</button></div>';
+}
+
+function dSetF(hid, f, v) {
+  var z = getZone(); if (!z) return;
+  var hs = (z.hotspots||[]).find(function(h){ return h.id===hid; });
+  if (!hs) return; hs[f] = v; saveAll();
+  if (f === 'label') renderDetStage();
+}
+function dSetV(hid, i, f, v) {
+  var z = getZone(); if (!z) return;
+  var hs = (z.hotspots||[]).find(function(h){ return h.id===hid; });
+  if (hs && hs.values && hs.values[i]) { hs.values[i][f] = v; saveAll(); }
+}
+function dAddV(hid) {
+  var z = getZone(); if (!z) return;
+  var hs = (z.hotspots||[]).find(function(h){ return h.id===hid; });
+  if (!hs) return;
+  if (!hs.values) hs.values = [];
+  hs.values.push({ label: '', value: '' });
+  saveAll(); renderDetSb();
+}
+function dRmV(hid, i) {
+  var z = getZone(); if (!z) return;
+  var hs = (z.hotspots||[]).find(function(h){ return h.id===hid; });
+  if (!hs) return; hs.values.splice(i, 1); saveAll(); renderDetSb();
+}
+function dDelHs(hid) {
+  if (!confirm('Ta bort denna hotspot?')) return;
+  var z = getZone(); if (!z) return;
+  z.hotspots = (z.hotspots||[]).filter(function(h){ return h.id!==hid; });
+  detSelHsId = null; saveAll(); renderDetStage(); renderDetSb();
+}
+function toggleHsDone(hid) {
+  var z = getZone(); if (!z) return;
+  var hs = (z.hotspots||[]).find(function(h){ return h.id===hid; });
+  if (!hs) return;
+  hs.done = !hs.done;
+  saveAll(); renderDetStage(); renderDetSb();
+}
+function toggleDetEdit() {
+  detIsEdit = !detIsEdit; detIsAdding = false;
+  document.getElementById('detStage').className = 'det-stage' + (detIsEdit ? ' edit-mode' : '');
+  document.getElementById('detEditBtn').textContent  = detIsEdit ? 'Klart' : 'Redigera';
+  document.getElementById('detEditBtn').className    = detIsEdit ? 'btn edit sm' : 'btn sm';
+  document.getElementById('detAddBtn').style.display = detIsEdit ? 'inline-flex' : 'none';
+  renderDetStage(); renderDetSb();
+}
+function detStartAdd() {
+  detIsAdding = true;
+  document.getElementById('detStage').classList.add('adding');
+  document.getElementById('detAddBtn').textContent = 'Klicka pa bilden...';
+}
+function detDotDown(e) {
+  if (!detIsEdit) return; e.stopPropagation();
+  var hid = parseInt(e.currentTarget.dataset.hid);
+  detSelHsId = hid;
+  var z = getZone(), hs = (z.hotspots||[]).find(function(h){ return h.id===hid; });
+  detDrag = { id: hid, startL: hs.left, startT: hs.top, startMX: e.clientX, startMY: e.clientY, moved: false, rect: document.getElementById('detStage').getBoundingClientRect() };
+  renderDetStage(); renderDetSb();
+}
+function detDotClick(e) {
+  if (detDidDrag) { detDidDrag = false; return; }
+  detSelHsId = parseInt(e.currentTarget.dataset.hid);
+  renderDetStage(); renderDetSb();
+}
+document.getElementById('detStage').addEventListener('click', function(e) {
+  if (detDidDrag) { detDidDrag = false; return; }
+  if (!detIsEdit || !detIsAdding) return;
+  if (e.target.closest && e.target.closest('.hotspot')) return;
+  var r = this.getBoundingClientRect();
+  var lp = clamp((e.clientX-r.left)/r.width*100,1,99);
+  var tp = clamp((e.clientY-r.top)/r.height*100,1,99);
+  var z = getZone(); if (!z) return;
+  if (!z.hotspots) z.hotspots = [];
+  var nid = z.hotspots.length ? Math.max.apply(null, z.hotspots.map(function(h){ return h.id; })) + 1 : 1;
+  z.hotspots.push({ id: nid, title: 'Hotspot ' + nid, label: 'HS'+nid, left: parseFloat(lp.toFixed(1)), top: parseFloat(tp.toFixed(1)), values: [], desc: '', zoomImg: '' });
+  detSelHsId = nid; detIsAdding = false;
+  document.getElementById('detStage').classList.remove('adding');
+  document.getElementById('detAddBtn').textContent = '+ Lagg till hotspot';
+  saveAll(); renderDetStage(); renderDetSb();
+});
+
+// ═══════════════════════════════════════
+// SHARED MOUSE EVENTS
+// ═══════════════════════════════════════
+document.addEventListener('mousemove', function(e) {
+  if (ovDrag) {
+    var dx = e.clientX - ovDrag.startMX, dy = e.clientY - ovDrag.startMY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) ovDrag.moved = true;
+    if (!ovDrag.moved) return;
+    var z = getMach(curMachId).zones.find(function(x){ return x.id === ovDrag.id; });
+    if (!z) return;
+    z.left = clamp(ovDrag.startL + dx / ovDrag.rect.width  * 100, 1, 99);
+    z.top  = clamp(ovDrag.startT + dy / ovDrag.rect.height * 100, 1, 99);
+    var m = document.querySelector('.zone-dot-btn[data-zid="' + z.id + '"]');
+    if (m) { m.style.left = z.left + '%'; m.style.top = z.top + '%'; }
+    document.getElementById('ovPosChip').textContent = 'L ' + z.left.toFixed(1) + '%  T ' + z.top.toFixed(1) + '%';
+    var eL = document.getElementById('ovEL'), eT = document.getElementById('ovET');
+    if (eL) eL.textContent = z.left.toFixed(1) + '%';
+    if (eT) eT.textContent = z.top.toFixed(1)  + '%';
+  }
+  if (detDrag) {
+    var dx2 = e.clientX - detDrag.startMX, dy2 = e.clientY - detDrag.startMY;
+    if (Math.abs(dx2) > 3 || Math.abs(dy2) > 3) detDrag.moved = true;
+    if (!detDrag.moved) return;
+    var zone = getZone(); if (!zone) return;
+    var hs = (zone.hotspots||[]).find(function(h){ return h.id === detDrag.id; });
+    if (!hs) return;
+    hs.left = clamp(detDrag.startL + dx2 / detDrag.rect.width  * 100, 1, 99);
+    hs.top  = clamp(detDrag.startT + dy2 / detDrag.rect.height * 100, 1, 99);
+    var dot = document.querySelector('.hotspot[data-hid="' + hs.id + '"]');
+    var lbl = document.querySelector('.hs-label[data-hlid="' + hs.id + '"]');
+    if (dot) { dot.style.left = hs.left + '%'; dot.style.top = hs.top + '%'; }
+    if (lbl) { lbl.style.left = hs.left + '%'; lbl.style.top = hs.top + '%'; }
+    document.getElementById('detPosChip').textContent = 'L ' + hs.left.toFixed(1) + '%  T ' + hs.top.toFixed(1) + '%';
+    var eL2 = document.getElementById('dEL'), eT2 = document.getElementById('dET');
+    if (eL2) eL2.textContent = hs.left.toFixed(1) + '%';
+    if (eT2) eT2.textContent = hs.top.toFixed(1)  + '%';
+  }
+});
+
+document.addEventListener('mouseup', function() {
+  if (ovDrag)  { if (ovDrag.moved)  { ovDidDrag  = true; saveAll(); } ovDrag  = null; }
+  if (detDrag) { if (detDrag.moved) { detDidDrag = true; saveAll(); } detDrag = null; }
+});
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ═══════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════
+renderStart();
+</script>
+</body>
+</html>
