@@ -417,7 +417,7 @@ function makeDefaultMachine() {
     overviewImg: './jones.png',
     zones: [
       {
-        id: 1, title: 'Vanster sektion', label: 'Z1',
+        id: 1, title: 'Zon 1', label: 'Z1',
         left: 28, top: 55, zoneImg: './maskin.jpg',
         hotspots: [
           { id: 1, title: 'Justeringspunkt', label: '17C', left: 20, top: 58,
@@ -435,7 +435,7 @@ function makeDefaultMachine() {
         ]
       },
       {
-        id: 2, title: 'Hoger sektion', label: 'Z2',
+        id: 2, title: 'Zon 2', label: 'Z2',
         left: 72, top: 42, zoneImg: '',
         hotspots: []
       }
@@ -842,7 +842,7 @@ function renderDetEditHTML(hs) {
       '<div style="display:flex;flex-direction:column;gap:5px">' + vr + '</div>' +
       '<button class="add-v" style="margin-top:6px" onclick="dAddV(' + hs.id + ')">+ Lagg till matvarde</button>' +
     '</div>' +
-    '<div class="card"><div class="fg"><label>Atgardsbeskrivning</label>' +
+    '<div class="card"><div class="fg"><label>Åtgärdsbeskrivning</label>' +
       '<textarea class="fc" oninput="dSetF(' + hs.id + ',\'desc\',this.value)">' + esc(hs.desc) + '</textarea></div></div>' +
     '<div style="display:flex;gap:7px"><button class="btn red sm" onclick="dDelHs(' + hs.id + ')">Ta bort hotspot</button></div>';
 }
