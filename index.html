@@ -218,7 +218,7 @@
 
     /* Detail sidebar */
     .det-sb { border-radius: 18px; border: 1px solid var(--border); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
-    .det-sb-scroll { flex: 1; overflow-y: auto; padding: 11px; display: flex; flex-direction: column; gap: 9px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.09) transparent; }
+    .det-sb-scroll { flex: 1; overflow-y: auto; padding: 11px; display: flex; flex-direction: column; gap: 9px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.09) transparent; touch-action: pan-y; }
     .card { padding: 12px; border-radius: 13px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); }
     .card-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
     .hs-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0; }
@@ -276,10 +276,12 @@
         position: fixed; bottom: 0; left: 0; right: 0;
         max-height: 65vh; border-radius: 18px 18px 0 0;
         border-bottom: 0; z-index: 200;
-        transform: translateY(105%);
+        transform: translateY(105%) translateZ(0);
         transition: transform 0.32s cubic-bezier(.2,.8,.2,1);
+        touch-action: manipulation;
+        -webkit-overflow-scrolling: touch;
       }
-      .det-sb.panel-open { transform: translateY(0); }
+      .det-sb.panel-open { transform: translateY(0) translateZ(0); }
 
       /* Panel drag handle */
       .panel-handle {
@@ -384,8 +386,8 @@
   </div>
 </div>
 
-<!-- Mobile backdrop -->
-<div id="mobBackdrop" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.45)" onclick="closeMobilePanel()"></div>
+<!-- Mobile backdrop (only covers area above the panel, not behind it) -->
+<div id="mobBackdrop" style="display:none;position:fixed;top:0;left:0;right:0;bottom:65vh;z-index:199;background:rgba(0,0,0,0.45)" onclick="closeMobilePanel()"></div>
 
 <!-- Mobile edit bar (shown in edit mode instead of full panel) -->
 <div id="editBar" class="edit-bar">
